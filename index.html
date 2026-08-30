@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Assistant RH — Mairie de Conflans-Sainte-Honorine</title>
+<link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+
+<div class="app">
+
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
+  <header class="header">
+
+    <div class="brand">
+
+      <div class="logo">
+        🪄
+      </div>
+
+      <div>
+
+        <h1>
+          Assistant RH
+        </h1>
+
+        <div class="subtitle">
+          Mairie de Conflans-Sainte-Honorine
+        </div>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <!-- =====================================================
+       CONTENU
+  ====================================================== -->
+
+  <main class="content">
+
+    <section class="welcome">
+
+      <h2>
+        👋 Bienvenue
+      </h2>
+
+      <p>
+        Je suis votre Assistant RH.
+        Posez-moi votre question et je vous
+        orienterai vers le bon interlocuteur
+        ou la bonne ressource.
+      </p>
+
+      <!-- ACCÈS MANAGERS -->
+      <div class="manager-access">
+        <a class="manager-button" href="managers.html">
+          🔐 Espace Encadrants
+        </a>
+      </div>
+
+      <div
+        class="suggestions"
+        id="suggestions">
+      </div>
+
+      <button
+        class="game-launch"
+        type="button"
+        onclick="startTreasureHunt()">
+
+        🕵️‍♀️ Aider Sam ?
+
+      </button>
+
+    </section>
+
+
+    <section
+      id="gameContainer"
+      class="hidden">
+    </section>
+
+
+    <section
+      class="chat"
+      id="chat"
+      aria-live="polite">
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       BARRE DE RECHERCHE
+  ====================================================== -->
+
+  <div class="searchbar">
+
+    <form
+      class="form"
+      id="questionForm">
+
+      <input
+        id="question"
+        type="text"
+        autocomplete="off"
+        autocapitalize="sentences"
+        enterkeyhint="send"
+        placeholder="Ex. « Je ne comprends pas mon bulletin de salaire »"
+        aria-label="Votre question">
+
+      <button
+        class="send"
+        type="submit">
+
+        Envoyer
+
+      </button>
+
+    </form>
+
+    <div class="disclaimer">
+
+      Cet assistant est conçu pour vous orienter de manière générale.
+      Pour une situation individuelle, contactez l'interlocuteur indiqué.
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<script src="app.js"></script>
+<script src="mission-integration.js"></script>
+
+</body>
+</html>
