@@ -56,12 +56,40 @@
         onclick="startTreasureHunt()">
         🕵️‍♀️ Aider Sam ?
       </button>
-      <button
-        class="game-launch"
-        type="button"
-        onclick="startIncollablesRH()">
-        🎴 Les Incollables
-      </button>
+      <details class="manager-faq" style="margin-top:12px;">
+        <summary class="manager-faq-header">
+          🎴 Les Incollables
+        </summary>
+        <div class="manager-faq-items">
+          <div class="manager-faq-item">
+            <div class="manager-faq-answer" style="padding-top:12px;">
+              <p>
+                Choisissez un thème pour lancer les fiches question/réponse.
+              </p>
+              <div class="actions">
+                <button
+                  class="action primary"
+                  type="button"
+                  onclick="startIncollablesRH('Rémunération')">
+                  💶 Rémunération
+                </button>
+                <button
+                  class="action primary"
+                  type="button"
+                  onclick="startIncollablesRH('Entretien professionnel')">
+                  🗣️ Entretien professionnel
+                </button>
+                <button
+                  class="action"
+                  type="button"
+                  onclick="startIncollablesRH()">
+                  🎲 Tous les thèmes mélangés
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
     <section
       id="gameContainer"
