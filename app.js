@@ -13,7 +13,7 @@ const ORG_NAME =
 const CONTACTS = {
 
     emploicompetences:{
-    label:"Secteur Emploi et développement des compétences",
+    label:"Secteur Emploi et développement des compténces",
     email: " A compléter",
     ficheUrl:"https://c.conflans.mairie-conflans.fr/#!/community/Ressources%2520Humaines/b1876ea4-a47a-4cb4-b84e-076eeade8ce6/d8bad4a4-3557-4feb-8087-54df234e8080/e7504b01-45da-4aa1-8f7f-45d5f22e4ef0/viewdetail/"
   },
@@ -39,17 +39,20 @@ const CONTACTS = {
   informatique:{
     label:"Service informatique",
     email:"A_COMPLETER",
+    phone:"A_COMPLETER"
   },
 
   intranet:{
     label:"Secteur Intranet",
     email:"A_COMPLETER",
+    phone:"A_COMPLETER",
     ficheUrl:"https://c.conflans.mairie-conflans.fr/#!/community/Ressources%2520Humaines/b1876ea4-a47a-4cb4-b84e-076eeade8ce6/d8bad4a4-3557-4feb-8087-54df234e8080/7d3a9df8-a60b-468f-ae58-e32e601e0fd2/viewdetail/"
   },
 
   prevention:{
     label:"Secteur Prévention",
     email:"A_COMPLETER",
+    phone:"A_COMPLETER",
     ficheUrl:"https://c.conflans.mairie-conflans.fr/#!/community/Ressources%2520Humaines/b1876ea4-a47a-4cb4-b84e-076eeade8ce6/d8bad4a4-3557-4feb-8087-54df234e8080/14ce95ca-56d5-44f7-a316-f377e4e2960c/viewdetail/"
   },
 
@@ -102,21 +105,11 @@ const DOCUMENTS = {
   formulaireRIB:{
     title:"Formulaire de changement de coordonnées bancaires",
     description:
-      "Formulaire à utiliser pour transmettre un nouveau RIB",
+      "Formulaire à utiliser pour transmettre un nouveau RIB.",
     type:"formulaire",
     format:"Formulaire",
     url:"https://c.conflans.mairie-conflans.fr/#!/media/documents/df5ec181-0683-42e0-94d7-193218d840ff"
   },
-   
-  prevoyance:{
-    title:"Prévoyance - Maintien de salaire",
-    description:
-      "Prévoyance - Maintien de salaire",
-    type:"page",
-    format:"Page intranet",
-    url:"https://c.conflans.mairie-conflans.fr/#!/community/Ressources%2520Humaines/b1876ea4-a47a-4cb4-b84e-076eeade8ce6/d8bad4a4-3557-4feb-8087-54df234e8080/79bbfa9a-7600-413b-a548-eb4492ff6a1a/viewdetail/"
-  },
-
 
   transmissiondocument:{
     title:"Comment transmettre vos documents au service RH",
@@ -144,17 +137,8 @@ const DOCUMENTS = {
     format:"Page intranet",
     url:"https://c.conflans.mairie-conflans.fr/#!/community/Ressources%2520Humaines/b1876ea4-a47a-4cb4-b84e-076eeade8ce6/d8bad4a4-3557-4feb-8087-54df234e8080/72601d00-ac3a-416e-becf-58d4c729c93c/viewdetail/"
   },
-   
-SFT:{
-    title:"Supplément Familial de Traitement 2026-2027",
-    description:
-      "Supplément Familial de Traitement 2026-2027",
-    type:"page",
-    format:"Page intranet",
-    url:"https://c.conflans.mairie-conflans.fr/#!/community/Ressources%2520Humaines/b1876ea4-a47a-4cb4-b84e-076eeade8ce6/d8bad4a4-3557-4feb-8087-54df234e8080/4b327ba3-3d51-47e7-9f30-6cd13e4794af/viewdetail/"
-},
-   
-   CartePluxee:{
+
+  CartePluxee:{
     title:"Bulletin d'adhésion Pluxee",
     description:
       "Formulaire à compléter et transmettre au secteur Paie.",
@@ -255,7 +239,7 @@ const FAQ = [
     ],
     title:"Question sur une absence exceptionnelle (ASA)",
     answer:
-      "Vous souhaitez transmettre un document ou vous avez une question concernant une absence exceptionnelle, contactez votre gestionnaire carrière.",
+      "Pour une question concernant une absence exceptionnelle ou une ASA, contactez votre gestionnaire carrière.",
     contact:"gestionnaireCarriere",
     documents:["transmissiondocument","Gestcarr"]
   },
@@ -268,9 +252,9 @@ const FAQ = [
       "rémunération","fiche de paie","fiche de salaire",
       "bulletin de salaire","prime","prélèvement",
       "prelevement","remboursement","abonnement","transports",
-      "Navigo","pass navigo","indemnité","régime indemnitaire",
-      "RIFSEEP","IFSE","CIA","NBI","indice majoré",
-      "prélèvement à la source",
+      "Navigo","indemnité","régime indemnitaire",
+      "RIFSEEP","IFSE","CIA","NBI","indice majoré","SFT",
+      "supplément familial","prélèvement à la source",
       "retenue sur salaire","régularisation",
       "heures supplémentaires","astreinte","permanence"
     ],
@@ -281,34 +265,6 @@ const FAQ = [
     documents:["versementsalaire"]
   },
    
-  {
-    id:"sft",
-    category:"Paie",
-    keywords:[
-      "supplément familial de traitement","supplement familial de traitement",
-       "supplément","supplement","formulaire sft","sft"
-    ],
-    title:"Question sur le Supplément Familial de Traitement (SFT)",
-    answer:
-      "Pour toute question sur le Supplément Familial de Traitement, la transmission ou le suivi de votre demande, contactez le secteur Paie.",
-    contact:"rhPaie",
-    documents:["SFT"]
-  },
-   
-    {
-    id:"prevoyance",
-    category:"Paie",
-    keywords:[
-      "prévoyance","prevoyance",
-       "maintien de salaire"
-    ],
-    title:"Question sur la prévoyance et le maintien de salaire",
-    answer:
-      "Pour toute question sur la Prévoyance et le maintien de salaire en cas de maladie, contactez le secteur Paie.",
-    contact:"rhPaie",
-    documents:["prevoyance"]
-  },
-    
     {
     id:"dossieragent",
     category:"Dossier administratif",
@@ -473,7 +429,7 @@ const FAQ = [
       "visite médicale","visite medicale","medecine du travail",
       "médecine du travail","médecin du travail","medecin du travail",
       "aptitude","inaptitude","reclassement",
-      "congé maladie","congé longue maladie","maladie",
+      "congé maladie","congé longue maladie",
       "congé longue durée","mi-temps thérapeutique",
       "mi temps therapeutique","santé au travail"
     ],
@@ -486,7 +442,7 @@ const FAQ = [
     id:"arrêttravail",
     category:"Santé",
     keywords:[
-      "arrêt","arret","arrêt de travail","arret de travail",
+      "arrêt","arret","arrêt de travail","arret de travail"
     ],
     title:"Question sur votre arrêt de travail",
     answer:
@@ -1225,6 +1181,7 @@ addMessage(`
     <p>
       Et si vous avez envie de tester vos connaissances,
       <strong>cliquez sur 🕵️ Aider Sam ?</strong>
+      ou lancez <strong>🎴 Les Incollables</strong>.
     </p>
 
   </div>
