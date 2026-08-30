@@ -233,6 +233,7 @@ const FICHES_INCOLLABLES = [
 let incollablesOrder = [];
 let incollablesIndex = 0;
 let incollablesRevealed = false;
+let incollablesTheme = null;
 
 /* =========================================================
    UTILITAIRES
@@ -261,10 +262,20 @@ function shuffleFiches(list){
    LANCEMENT DU JEU
 ========================================================= */
 
-function startIncollablesRH(){
+function startIncollablesRH(theme){
+
+  incollablesTheme =
+    theme || null;
+
+  const pool =
+    incollablesTheme
+      ? FICHES_INCOLLABLES.filter(
+          fiche => fiche.theme === incollablesTheme
+        )
+      : FICHES_INCOLLABLES;
 
   incollablesOrder =
-    shuffleFiches(FICHES_INCOLLABLES);
+    shuffleFiches(pool);
 
   incollablesIndex = 0;
   incollablesRevealed = false;
@@ -405,7 +416,7 @@ function renderIncollablesCard(){
         <button
           class="game-button"
           type="button"
-          onclick="startIncollablesRH()">
+          onclick="startIncollablesRH(incollablesTheme)">
           🔄 Rejouer avec de nouvelles fiches
         </button>
     `;
