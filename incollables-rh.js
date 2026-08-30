@@ -139,9 +139,9 @@ const FICHES_INCOLLABLES = [
   {
     theme:"Entretien professionnel",
     badge:"🟢 Facile",
-    recto:"Que signifie l'acronyme CREP ?",
-    verso:"Compte Rendu de l'Entretien Professionnel, le document officiel qui formalise l'entretien.",
-    astuce:"C'est ce document qui est ensuite versé au dossier administratif de l'agent."
+    recto:"Comment appelle-t-on le document officiel qui formalise l'entretien professionnel ?",
+    verso:"Le compte rendu d'entretien professionnel.",
+    astuce:"Ce document, ensuite versé au dossier administratif de l'agent, est parfois désigné par le sigle CREP."
   },
 
   {
@@ -165,13 +165,13 @@ const FICHES_INCOLLABLES = [
     badge:"🟠 Moyen",
     recto:"Que doit obligatoirement comporter le compte-rendu d'entretien ?",
     verso:"Le bilan de l'année écoulée, les objectifs de l'année à venir, l'appréciation de la valeur professionnelle et les perspectives d'évolution.",
-    astuce:"Un CREP incomplet peut être un motif de contestation par l'agent."
+    astuce:"Un compte rendu d'entretien professionnel incomplet peut être un motif de contestation par l'agent."
   },
 
   {
     theme:"Entretien professionnel",
     badge:"🟠 Moyen",
-    recto:"Que signifie la signature de l'agent sur le CREP ?",
+    recto:"Que signifie la signature de l'agent sur le compte rendu d'entretien professionnel ?",
     verso:"Un simple accusé de réception, pas un accord avec son contenu.",
     astuce:"L'agent peut très bien signer tout en indiquant par ailleurs son désaccord."
   },
@@ -205,7 +205,7 @@ const FICHES_INCOLLABLES = [
     badge:"🔴 Expert",
     recto:"L'entretien professionnel influence-t-il l'avancement de grade ?",
     verso:"Oui : la valeur professionnelle évaluée lors de l'entretien sert de base à l'appréciation pour les avancements.",
-    astuce:"C'est pour cette raison qu'un CREP mal renseigné peut avoir des conséquences sur plusieurs années."
+    astuce:"C'est pour cette raison qu'un compte rendu d'entretien professionnel mal renseigné peut avoir des conséquences sur plusieurs années."
   },
 
   {
@@ -219,9 +219,107 @@ const FICHES_INCOLLABLES = [
   {
     theme:"Entretien professionnel",
     badge:"🟠 Moyen",
-    recto:"Un agent qui refuse de signer son CREP peut-il bloquer la procédure ?",
+    recto:"Un agent qui refuse de signer son compte rendu d'entretien professionnel peut-il bloquer la procédure ?",
     verso:"Non : le refus est noté sur le document, mais n'empêche pas le compte-rendu de produire ses effets.",
     astuce:"L'agent conserve dans tous les cas la possibilité de demander une révision par la suite."
+  },
+
+  /* --- FORMATION --- */
+
+  {
+    theme:"Formation",
+    badge:"🟢 Facile",
+    recto:"Quelle formation est obligatoire pour tout fonctionnaire stagiaire avant sa titularisation ?",
+    verso:"La formation d'intégration.",
+    astuce:"Elle vise à donner à l'agent les bases du fonctionnement de la fonction publique territoriale."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🟢 Facile",
+    recto:"Qui organise la formation d'intégration et la formation de professionnalisation des agents territoriaux ?",
+    verso:"Le CNFPT, Centre National de la Fonction Publique Territoriale.",
+    astuce:"Chaque collectivité cotise au CNFPT pour financer ces formations obligatoires."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🟠 Moyen",
+    recto:"Combien de jours dure la formation d'intégration pour un agent de catégorie A ou B ?",
+    verso:"5 jours.",
+    astuce:"Cette durée est fixée par décret et identique pour ces deux catégories."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🟠 Moyen",
+    recto:"Et pour un agent de catégorie C recruté par concours ?",
+    verso:"3 jours. Les agents de catégorie C recrutés sans concours en sont dispensés.",
+    astuce:"Ces derniers suivent malgré tout une formation de professionnalisation au premier emploi."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🟠 Moyen",
+    recto:"Quelle formation doit suivre un agent dans les deux ans suivant sa nomination sur son premier poste ?",
+    verso:"La formation de professionnalisation au premier emploi.",
+    astuce:"Sa durée varie selon le cadre d'emplois de l'agent."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🔴 Expert",
+    recto:"À quelle fréquence un agent doit-il suivre une formation de professionnalisation tout au long de sa carrière ?",
+    verso:"Par périodes de 5 ans, tant qu'il reste en position d'activité.",
+    astuce:"Cette obligation s'ajoute à la formation de professionnalisation au premier emploi, qui n'intervient qu'une fois."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🔴 Expert",
+    recto:"Un agent nouvellement placé sur un poste d'encadrement a-t-il une obligation de formation spécifique ?",
+    verso:"Oui, une formation de professionnalisation à la prise de poste d'encadrement, à suivre dans les 6 mois.",
+    astuce:"Elle est distincte de la formation de professionnalisation au premier emploi."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🟢 Facile",
+    recto:"Qu'est-ce que le CPF pour un agent public ?",
+    verso:"Le Compte Personnel de Formation, crédité en heures utilisables pour un projet d'évolution professionnelle.",
+    astuce:"Les agents publics en disposent au même titre que les salariés du privé, avec des règles propres."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🟠 Moyen",
+    recto:"Un agent contractuel est-il soumis aux mêmes obligations de formation statutaire qu'un fonctionnaire ?",
+    verso:"Non : la formation d'intégration et de professionnalisation concerne les fonctionnaires stagiaires et titulaires. Les contractuels relèvent du plan de formation et du CPF.",
+    astuce:"Ils conservent malgré tout un droit d'accès à la formation continue."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🔴 Expert",
+    recto:"Un agent peut-il refuser de suivre une formation obligatoire (intégration, professionnalisation) ?",
+    verso:"Non, sauf motif légitime (santé...). Un refus injustifié peut être sanctionné.",
+    astuce:"Ces formations sont considérées comme faisant partie des obligations de service de l'agent."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🟠 Moyen",
+    recto:"Quelle formation prépare spécifiquement aux concours et examens professionnels ?",
+    verso:"La formation de préparation aux concours et examens, qui relève de la formation continue.",
+    astuce:"Elle n'est pas obligatoire, contrairement à la formation d'intégration ou de professionnalisation."
+  },
+
+  {
+    theme:"Formation",
+    badge:"🟢 Facile",
+    recto:"Quel dispositif permet à un agent de faire reconnaître une expérience professionnelle sans diplôme correspondant ?",
+    verso:"La VAE, Validation des Acquis de l'Expérience.",
+    astuce:"Elle peut permettre d'obtenir tout ou partie d'un diplôme, d'un titre ou d'une certification."
   }
 
 ];
