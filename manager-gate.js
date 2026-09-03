@@ -710,12 +710,18 @@ document.addEventListener("DOMContentLoaded", () => {
   if(!input) return;
 
   insertMatriculeField();
+  input.removeAttribute("autofocus");
 
   const matriculeInput = document.getElementById("managerMatricule");
-  setTimeout(() => {
-    if(matriculeInput) matriculeInput.focus();
-    else input.focus();
-  }, 0);
+  const grabFocus = () => {
+    if(!matriculeInput) return;
+    input.blur();
+    matriculeInput.focus();
+  };
+  grabFocus();
+  requestAnimationFrame(grabFocus);
+  setTimeout(grabFocus, 50);
+  setTimeout(grabFocus, 300);
 
   input.addEventListener("input", () => {
     input.value = input.value.replace(/\D/g, "").slice(0, 4);
