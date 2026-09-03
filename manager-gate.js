@@ -294,11 +294,11 @@ function insertMatriculeField(){
   input.type = "text";
   input.inputMode = "numeric";
   input.autocomplete = "off";
-  input.maxLength = 5;
+  input.setAttribute("maxlength", "6");
   input.placeholder = "Ex. 10234";
 
   input.addEventListener("input", () => {
-    input.value = input.value.replace(/\D/g, "").slice(0, 5);
+    input.value = input.value.replace(/\D/g, "").slice(0, 6);
   });
 
   wrapper.appendChild(label);
