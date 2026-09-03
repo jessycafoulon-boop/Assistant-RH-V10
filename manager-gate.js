@@ -712,8 +712,10 @@ document.addEventListener("DOMContentLoaded", () => {
   insertMatriculeField();
 
   const matriculeInput = document.getElementById("managerMatricule");
-  if(matriculeInput) matriculeInput.focus();
-  else input.focus();
+  setTimeout(() => {
+    if(matriculeInput) matriculeInput.focus();
+    else input.focus();
+  }, 0);
 
   input.addEventListener("input", () => {
     input.value = input.value.replace(/\D/g, "").slice(0, 4);
