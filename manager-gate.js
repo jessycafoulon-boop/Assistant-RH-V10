@@ -710,18 +710,24 @@ document.addEventListener("DOMContentLoaded", () => {
   if(!input) return;
 
   insertMatriculeField();
-  input.removeAttribute("autofocus");
 
   const matriculeInput = document.getElementById("managerMatricule");
-  const grabFocus = () => {
-    if(!matriculeInput) return;
-    input.blur();
+
+  // Quelle que soit la cause (clic, tabulation, extension de gestionnaire
+  // de mots de passe...), si le champ code reçoit le focus alors que le
+  // matricule est encore vide, on renvoie systématiquement le focus vers
+  // le matricule. Contrairement à un focus() unique au chargement de la
+  // page, ça fonctionne à chaque fois, pas seulement au premier instant.
+  if(matriculeInput){
     matriculeInput.focus();
-  };
-  grabFocus();
-  requestAnimationFrame(grabFocus);
-  setTimeout(grabFocus, 50);
-  setTimeout(grabFocus, 300);
+
+    input.addEventListener("focus", () => {
+      if(!matriculeInput.value.trim()){
+        input.blur();
+        matriculeInput.focus();
+      }
+    });
+  }
 
   input.addEventListener("input", () => {
     input.value = input.value.replace(/\D/g, "").slice(0, 4);
