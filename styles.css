@@ -418,6 +418,64 @@ html{ scroll-behavior:auto; }
   background:rgba(255,255,255,.22);
 }
 
+/* ---- Onglets de filtrage par thème ---- */
+.manager-chat-theme-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:10px 14px;
+  background:#fff;
+  border-bottom:1px solid var(--border);
+}
+
+.manager-chat-theme-tab{
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--muted);
+  border-radius:999px;
+  padding:6px 11px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.18s ease;
+  white-space:nowrap;
+}
+
+.manager-chat-theme-tab:hover{
+  border-color:var(--primary);
+  color:var(--primary-dark);
+}
+
+.manager-chat-theme-tab.active{
+  background:var(--primary);
+  border-color:var(--primary);
+  color:#fff;
+}
+
+/* ---- Badge de thème affiché sur chaque message ---- */
+.manager-chat-message-meta-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:0 4px 4px;
+}
+
+.manager-chat-message-matricule{
+  font-size:11px;
+  font-weight:800;
+  color:var(--primary-dark);
+}
+
+.manager-chat-theme-badge{
+  font-size:10px;
+  font-weight:700;
+  color:var(--muted);
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:1px 8px;
+}
+
 /* ---- Messages ---- */
 .manager-chat-messages{
   max-height:360px;
@@ -443,13 +501,6 @@ html{ scroll-behavior:auto; }
 .manager-chat-message.other{
   align-self:flex-start;
   align-items:flex-start;
-}
-
-.manager-chat-message-matricule{
-  font-size:11px;
-  font-weight:800;
-  color:var(--primary-dark);
-  margin:0 6px 4px;
 }
 
 /* Bulle avec petite pointe façon bande dessinée */
@@ -555,6 +606,19 @@ html{ scroll-behavior:auto; }
   border-top:1px solid var(--border);
 }
 
+.manager-chat-theme-select{
+  flex-shrink:0;
+  max-width:118px;
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--text);
+  border-radius:999px;
+  padding:9px 8px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
 .manager-chat-input-wrap{
   flex:1;
   min-width:0;
@@ -618,4 +682,7 @@ html{ scroll-behavior:auto; }
   .manager-chat-form{ padding:10px; }
   .manager-chat-input-wrap input{ font-size:16px; min-height:24px; }
   .manager-chat-send{ width:38px; height:38px; }
+  .manager-chat-theme-tabs{ padding:8px 10px; gap:5px; }
+  .manager-chat-theme-tab{ padding:6px 9px; font-size:11px; }
+  .manager-chat-theme-select{ max-width:88px; font-size:11px; padding:9px 6px; }
 }
