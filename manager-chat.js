@@ -102,28 +102,27 @@ function renderMatriculeGate() {
     <div class="manager-chat-identify">
       <h3 class="manager-chat-title">💬 Chat entre encadrants <span class="manager-chat-badge">test</span></h3>
       <p class="manager-chat-hint">
-        Choisissez votre matricule de test. Aucun nom n'est stocké :
-        seul le matricule apparaît à côté de vos messages, visibles
-        de tous les encadrants connectés à cet espace.
+        Choisissez votre matricule de test pour rejoindre le chat. Aucun nom n'est
+        stocké : seul le matricule apparaît à côté de vos messages, visibles de
+        tous les encadrants connectés à cet espace.
       </p>
-      <div class="manager-chat-identify-row">
-        <select id="managerChatMatriculeSelect" class="manager-chat-select" aria-label="Choisir un matricule de test">
-          <option value="">— Choisir un matricule —</option>
-          ${TEST_MATRICULES.map(m => `<option value="${m}">${m}</option>`).join("")}
-        </select>
-        <button id="managerChatIdentifyBtn" type="button" class="manager-pin-submit">
-          Rejoindre le chat
-        </button>
+      <div class="manager-chat-chip-row">
+        ${TEST_MATRICULES.map(m => `
+          <button type="button" class="manager-chat-chip" data-matricule="${m}">
+            ${escapeHtml(m)}
+          </button>
+        `).join("")}
       </div>
     </div>
   `;
 
-  document.getElementById("managerChatIdentifyBtn").addEventListener("click", () => {
-    const select = document.getElementById("managerChatMatriculeSelect");
-    const value = select.value;
-    if (!TEST_MATRICULES.includes(value)) return;
-    setStoredMatricule(value);
-    renderChat(value);
+  container.querySelectorAll(".manager-chat-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const value = chip.dataset.matricule;
+      if (!TEST_MATRICULES.includes(value)) return;
+      setStoredMatricule(value);
+      renderChat(value);
+    });
   });
 }
 
@@ -138,9 +137,11 @@ function renderChat(matricule) {
   container.innerHTML = `
     <div class="manager-chat">
       <div class="manager-chat-header">
-        <span>💬 Connecté avec le matricule <strong>${escapeHtml(matricule)}</strong></span>
+        <span class="manager-chat-header-label">
+          💬 Vous discutez sous le matricule <strong>${escapeHtml(matricule)}</strong>
+        </span>
         <button id="managerChatSwitchBtn" type="button" class="manager-chat-switch">
-          Changer de matricule
+          Changer
         </button>
       </div>
       <div id="managerChatMessages" class="manager-chat-messages" aria-live="polite">
@@ -154,7 +155,7 @@ function renderChat(matricule) {
           autocomplete="off"
           placeholder="Écrire un message…"
           aria-label="Votre message">
-        <button type="submit" class="manager-pin-submit">Envoyer</button>
+        <button type="submit" class="manager-chat-send" aria-label="Envoyer">➤</button>
       </form>
     </div>
   `;
@@ -194,14 +195,14 @@ function renderChat(matricule) {
     }
   });
 
-  listenToMessages();
+  listenToMessages(matricule);
 }
 
 /* =========================================================
    ÉCOUTE TEMPS RÉEL DES MESSAGES
 ========================================================= */
 
-function listenToMessages() {
+function listenToMessages(ownMatricule) {
   if (unsubscribeMessages) unsubscribeMessages();
 
   const messagesEl = document.getElementById("managerChatMessages");
@@ -225,14 +226,15 @@ function listenToMessages() {
         .map(docSnap => {
           const data = docSnap.data();
           const date = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
+          const isOwn = data.matricule === ownMatricule;
 
           return `
-            <div class="manager-chat-message">
-              <div class="manager-chat-message-meta">
-                <span class="manager-chat-message-matricule">Matricule ${escapeHtml(data.matricule || "?")}</span>
-                <span class="manager-chat-message-time">${escapeHtml(formatTime(date))}</span>
+            <div class="manager-chat-message ${isOwn ? "own" : "other"}">
+              ${isOwn ? "" : `<div class="manager-chat-message-matricule">Matricule ${escapeHtml(data.matricule || "?")}</div>`}
+              <div class="manager-chat-bubble">
+                <div class="manager-chat-message-text">${escapeHtml(data.message || "")}</div>
+                <div class="manager-chat-message-time">${escapeHtml(formatTime(date))}</div>
               </div>
-              <div class="manager-chat-message-text">${escapeHtml(data.message || "")}</div>
             </div>
           `;
         })
