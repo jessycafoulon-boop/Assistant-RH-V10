@@ -2,7 +2,9 @@
    CHAT DE L'ESPACE ENCADRANTS — VERSION DE TEST
    ---------------------------------------------------------
    Chat partagé entre les encadrants ayant accès à l'espace
-   managers, stocké dans Cloud Firestore (Firebase).
+   managers, stocké dans Cloud Firestore (Firebase). 100%
+   gratuit : ce fichier n'utilise QUE Firestore, pas Firebase
+   Storage (qui nécessite le forfait payant Blaze).
 
    Identification : PAR MATRICULE UNIQUEMENT. Aucun nom ni
    prénom n'est jamais envoyé, stocké ou affiché — seul le
@@ -14,6 +16,12 @@
    correspondante dans les règles de sécurité Firestore
    (rules_version 2, collection managerChat) — les deux
    listes doivent toujours être identiques.
+
+   PAS D'UPLOAD DE FICHIER : pour partager un document ou une
+   image, on colle un lien vers une ressource déjà hébergée
+   ailleurs (intranet, Drive…). Les liens deviennent cliquables
+   automatiquement, et un lien pointant directement vers une
+   image (.jpg, .png…) s'affiche en aperçu dans la bulle.
 
    ⚠️ Ce fichier est chargé en tant que module ES (voir
    managers.html) car il utilise le SDK Firebase via CDN.
@@ -33,12 +41,6 @@ import {
   onSnapshot,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCfJ5zauVkLWUMp5pjkAIa0gC1H7y2tDr0",
@@ -51,7 +53,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 /* Liste des matricules acceptés en phase de test.
    Doit rester identique à la liste dans les règles Firestore. */
@@ -59,15 +60,9 @@ const TEST_MATRICULES = ["10001", "10002", "10003", "10004"];
 
 const STORAGE_KEY = "managerChatMatricule";
 const MAX_MESSAGE_LENGTH = 500;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Mo
-const ALLOWED_FILE_TYPES = [
-  "image/jpeg", "image/png", "image/gif", "image/webp",
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-];
+
+const URL_REGEX = /(https?:\/\/[^\s<]+)/g;
+const IMAGE_URL_REGEX = /\.(jpe?g|png|gif|webp)(\?[^\s<]*)?$/i;
 
 let unsubscribeMessages = null;
 
@@ -106,22 +101,25 @@ function clearStoredMatricule() {
   sessionStorage.removeItem(STORAGE_KEY);
 }
 
-function isImageType(type) {
-  return typeof type === "string" && type.startsWith("image/");
-}
+/* Rend le texte d'un message sûr (HTML échappé), transforme les
+   liens en liens cliquables, et extrait un aperçu d'image si un
+   lien pointe directement vers un fichier image. */
+function renderMessageContent(rawMessage) {
+  const escaped = escapeHtml(rawMessage || "");
+  let imagesHtml = "";
 
-function formatFileSize(bytes) {
-  if (!bytes && bytes !== 0) return "";
-  if (bytes < 1024) return `${bytes} o`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
-}
+  const textHtml = escaped.replace(URL_REGEX, url => {
+    if (IMAGE_URL_REGEX.test(url)) {
+      imagesHtml += `
+        <a href="${url}" target="_blank" rel="noopener" class="manager-chat-file-image-link">
+          <img src="${url}" alt="Image partagée" class="manager-chat-file-image" loading="lazy">
+        </a>
+      `;
+    }
+    return `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+  });
 
-function sanitizeFileName(name) {
-  return String(name || "fichier")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .slice(-120);
+  return { textHtml, imagesHtml };
 }
 
 /* =========================================================
@@ -168,8 +166,6 @@ function renderChat(matricule) {
   const container = document.getElementById("managerChatContainer");
   if (!container) return;
 
-  let selectedFile = null;
-
   container.innerHTML = `
     <div class="manager-chat">
       <div class="manager-chat-header">
@@ -183,18 +179,14 @@ function renderChat(matricule) {
       <div id="managerChatMessages" class="manager-chat-messages" aria-live="polite">
         <div class="manager-chat-loading">Chargement des messages…</div>
       </div>
-      <div id="managerChatFilePreview" class="manager-chat-file-preview" hidden></div>
       <form id="managerChatForm" class="manager-chat-form">
-        <input type="file" id="managerChatFileInput" class="manager-chat-file-input"
-               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" hidden>
-        <button type="button" id="managerChatAttachBtn" class="manager-chat-attach" aria-label="Joindre un fichier">📎</button>
         <div class="manager-chat-input-wrap">
           <input
             id="managerChatInput"
             type="text"
             maxlength="${MAX_MESSAGE_LENGTH}"
             autocomplete="off"
-            placeholder="Écrire un message…"
+            placeholder="Écrire un message… (collez un lien pour partager un document)"
             aria-label="Votre message">
           <button type="submit" class="manager-chat-send" aria-label="Envoyer">➤</button>
         </div>
@@ -211,96 +203,28 @@ function renderChat(matricule) {
     renderMatriculeGate();
   });
 
-  const fileInput = document.getElementById("managerChatFileInput");
-  const previewEl = document.getElementById("managerChatFilePreview");
-
-  function renderFilePreview() {
-    if (!selectedFile) {
-      previewEl.hidden = true;
-      previewEl.innerHTML = "";
-      return;
-    }
-    previewEl.hidden = false;
-    previewEl.innerHTML = `
-      <span class="manager-chat-file-preview-name">
-        ${isImageType(selectedFile.type) ? "🖼️" : "📄"} ${escapeHtml(selectedFile.name)}
-        <span class="manager-chat-file-preview-size">(${escapeHtml(formatFileSize(selectedFile.size))})</span>
-      </span>
-      <button type="button" id="managerChatFileRemove" class="manager-chat-file-remove" aria-label="Retirer le fichier">✕</button>
-    `;
-    document.getElementById("managerChatFileRemove").addEventListener("click", () => {
-      selectedFile = null;
-      fileInput.value = "";
-      renderFilePreview();
-    });
-  }
-
-  document.getElementById("managerChatAttachBtn").addEventListener("click", () => {
-    fileInput.click();
-  });
-
-  fileInput.addEventListener("change", () => {
-    const file = fileInput.files && fileInput.files[0];
-    if (!file) return;
-
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      alert("Ce type de fichier n'est pas autorisé. Formats acceptés : images, PDF, Word, Excel.");
-      fileInput.value = "";
-      return;
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      alert("Le fichier dépasse la taille maximale autorisée (10 Mo).");
-      fileInput.value = "";
-      return;
-    }
-
-    selectedFile = file;
-    renderFilePreview();
-  });
-
   document.getElementById("managerChatForm").addEventListener("submit", async event => {
     event.preventDefault();
 
     const input = document.getElementById("managerChatInput");
     const message = input.value.trim();
-    if (!message && !selectedFile) return;
+    if (!message) return;
 
     const submitBtn = event.target.querySelector("button[type=submit]");
-    const attachBtn = document.getElementById("managerChatAttachBtn");
     if (submitBtn) submitBtn.disabled = true;
-    if (attachBtn) attachBtn.disabled = true;
 
     try {
-      const payload = {
+      await addDoc(collection(db, "managerChat"), {
         matricule,
         message,
         createdAt: serverTimestamp()
-      };
-
-      if (selectedFile) {
-        const path = `managerChatFiles/${matricule}/${Date.now()}_${sanitizeFileName(selectedFile.name)}`;
-        const fileRef = ref(storage, path);
-        await uploadBytes(fileRef, selectedFile, { contentType: selectedFile.type });
-        const url = await getDownloadURL(fileRef);
-
-        payload.fileUrl = url;
-        payload.fileName = selectedFile.name;
-        payload.fileType = selectedFile.type;
-        payload.fileSize = selectedFile.size;
-      }
-
-      await addDoc(collection(db, "managerChat"), payload);
-
+      });
       input.value = "";
-      selectedFile = null;
-      fileInput.value = "";
-      renderFilePreview();
     } catch (err) {
       console.error("Erreur lors de l'envoi du message :", err);
       alert("Le message n'a pas pu être envoyé. Réessayez dans un instant.");
     } finally {
       if (submitBtn) submitBtn.disabled = false;
-      if (attachBtn) attachBtn.disabled = false;
       input.focus();
     }
   });
@@ -337,31 +261,14 @@ function listenToMessages(ownMatricule) {
           const data = docSnap.data();
           const date = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
           const isOwn = data.matricule === ownMatricule;
-
-          let fileHtml = "";
-          if (data.fileUrl) {
-            if (isImageType(data.fileType)) {
-              fileHtml = `
-                <a href="${escapeHtml(data.fileUrl)}" target="_blank" rel="noopener" class="manager-chat-file-image-link">
-                  <img src="${escapeHtml(data.fileUrl)}" alt="${escapeHtml(data.fileName || "Image jointe")}" class="manager-chat-file-image">
-                </a>
-              `;
-            } else {
-              fileHtml = `
-                <a href="${escapeHtml(data.fileUrl)}" target="_blank" rel="noopener" class="manager-chat-file-doc">
-                  📄 <span>${escapeHtml(data.fileName || "Document joint")}</span>
-                  ${data.fileSize ? `<span class="manager-chat-file-doc-size">${escapeHtml(formatFileSize(data.fileSize))}</span>` : ""}
-                </a>
-              `;
-            }
-          }
+          const { textHtml, imagesHtml } = renderMessageContent(data.message);
 
           return `
             <div class="manager-chat-message ${isOwn ? "own" : "other"}">
               ${isOwn ? "" : `<div class="manager-chat-message-matricule">Matricule ${escapeHtml(data.matricule || "?")}</div>`}
               <div class="manager-chat-bubble">
-                ${fileHtml}
-                ${data.message ? `<div class="manager-chat-message-text">${escapeHtml(data.message)}</div>` : ""}
+                ${imagesHtml}
+                <div class="manager-chat-message-text">${textHtml}</div>
                 <div class="manager-chat-message-time">${escapeHtml(formatTime(date))}</div>
               </div>
             </div>
