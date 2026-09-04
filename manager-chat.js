@@ -81,6 +81,7 @@ const IMAGE_URL_REGEX = /\.(jpe?g|png|gif|webp)(\?[^\s<]*)?$/i;
 
 let unsubscribeMessages = null;
 let currentThemeFilter = "all";
+let currentSearchQuery = "";
 let latestMessageDocs = [];
 
 /* =========================================================
@@ -94,6 +95,12 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function stripAccents(str) {
+  return String(str || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function formatTime(date) {
@@ -201,6 +208,12 @@ function renderChat(matricule) {
           </button>
         `).join("")}
       </div>
+      <div class="manager-chat-search-bar">
+        <input type="search" id="managerChatSearchInput" class="manager-chat-search-input"
+               placeholder="🔎 Rechercher un mot-clé dans les messages…" autocomplete="off"
+               aria-label="Rechercher dans les messages du chat">
+        <div id="managerChatSearchCount" class="manager-chat-search-count"></div>
+      </div>
       <div id="managerChatMessages" class="manager-chat-messages" aria-live="polite">
         <div class="manager-chat-loading">Chargement des messages…</div>
       </div>
@@ -223,6 +236,7 @@ function renderChat(matricule) {
   `;
 
   currentThemeFilter = "all";
+  currentSearchQuery = "";
 
   document.getElementById("managerChatThemeTabs").addEventListener("click", event => {
     const tab = event.target.closest(".manager-chat-theme-tab");
@@ -231,6 +245,11 @@ function renderChat(matricule) {
     document.querySelectorAll(".manager-chat-theme-tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
     currentThemeFilter = tab.dataset.theme;
+    renderMessagesList(matricule);
+  });
+
+  document.getElementById("managerChatSearchInput").addEventListener("input", event => {
+    currentSearchQuery = event.target.value;
     renderMessagesList(matricule);
   });
 
@@ -307,14 +326,33 @@ function listenToMessages(ownMatricule) {
 
 function renderMessagesList(ownMatricule) {
   const messagesEl = document.getElementById("managerChatMessages");
+  const countEl = document.getElementById("managerChatSearchCount");
   if (!messagesEl) return;
 
-  const filtered = currentThemeFilter === "all"
+  let filtered = currentThemeFilter === "all"
     ? latestMessageDocs
     : latestMessageDocs.filter(docSnap => (docSnap.data().theme || "general") === currentThemeFilter);
 
+  const terms = stripAccents(currentSearchQuery.trim().toLowerCase()).split(/\s+/).filter(Boolean);
+
+  if (terms.length > 0) {
+    filtered = filtered.filter(docSnap => {
+      const normalized = stripAccents(String(docSnap.data().message || "").toLowerCase());
+      return terms.every(term => normalized.includes(term));
+    });
+  }
+
+  if (countEl) {
+    countEl.textContent = terms.length > 0
+      ? `${filtered.length} résultat${filtered.length > 1 ? "s" : ""}`
+      : "";
+  }
+
   if (filtered.length === 0) {
-    messagesEl.innerHTML = `<div class="manager-chat-empty">Aucun message ${currentThemeFilter === "all" ? "pour l'instant" : "dans ce thème"}. Soyez le premier à écrire !</div>`;
+    const emptyLabel = terms.length > 0
+      ? `Aucun message ne correspond à « ${escapeHtml(currentSearchQuery.trim())} ».`
+      : `Aucun message ${currentThemeFilter === "all" ? "pour l'instant" : "dans ce thème"}. Soyez le premier à écrire !`;
+    messagesEl.innerHTML = `<div class="manager-chat-empty">${emptyLabel}</div>`;
     return;
   }
 
