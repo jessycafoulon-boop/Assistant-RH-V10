@@ -452,6 +452,41 @@ html{ scroll-behavior:auto; }
   color:#fff;
 }
 
+/* ---- Barre de recherche par mot-clé ---- */
+.manager-chat-search-bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 14px;
+  background:#fff;
+  border-bottom:1px solid var(--border);
+}
+
+.manager-chat-search-input{
+  flex:1;
+  min-width:0;
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:13px;
+  outline:none;
+  color:var(--text);
+}
+
+.manager-chat-search-input:focus{
+  border-color:var(--primary);
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(36,87,166,.1);
+}
+
+.manager-chat-search-count{
+  flex-shrink:0;
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
 /* ---- Badge de thème affiché sur chaque message ---- */
 .manager-chat-message-meta-row{
   display:flex;
@@ -685,4 +720,6 @@ html{ scroll-behavior:auto; }
   .manager-chat-theme-tabs{ padding:8px 10px; gap:5px; }
   .manager-chat-theme-tab{ padding:6px 9px; font-size:11px; }
   .manager-chat-theme-select{ max-width:88px; font-size:11px; padding:9px 6px; }
+  .manager-chat-search-bar{ padding:8px 10px; flex-wrap:wrap; }
+  .manager-chat-search-input{ font-size:16px; min-height:38px; }
 }
