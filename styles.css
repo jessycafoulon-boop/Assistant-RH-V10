@@ -302,6 +302,7 @@ html{ scroll-behavior:auto; }
 *::after{ scroll-behavior:auto!important; transition:none!important; animation:none!important; }
 
 }
+
 /* =========================================================
    CHAT DE L'ESPACE ENCADRANTS
    Remplace ENTIÈREMENT tout bloc précédent "CHAT DE L'ESPACE
@@ -518,43 +519,7 @@ html{ scroll-behavior:auto; }
   color:var(--danger);
 }
 
-/* ---- Pièce jointe : aperçu avant envoi ---- */
-.manager-chat-file-preview{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  padding:9px 14px;
-  margin:12px 14px 0;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:var(--bg);
-  font-size:12.5px;
-}
-
-.manager-chat-file-preview-name{
-  overflow-wrap:anywhere;
-}
-
-.manager-chat-file-preview-size{
-  color:var(--muted);
-  font-size:11px;
-}
-
-.manager-chat-file-remove{
-  border:0;
-  background:none;
-  color:var(--muted);
-  cursor:pointer;
-  font-size:14px;
-  flex-shrink:0;
-}
-
-.manager-chat-file-remove:hover{
-  color:var(--danger);
-}
-
-/* ---- Pièce jointe : affichage dans une bulle ---- */
+/* ---- Lien image partagé : affichage dans une bulle ---- */
 .manager-chat-file-image-link{
   display:block;
   margin-bottom:6px;
@@ -568,37 +533,6 @@ html{ scroll-behavior:auto; }
   object-fit:cover;
 }
 
-.manager-chat-file-doc{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  margin-bottom:6px;
-  padding:8px 10px;
-  border-radius:10px;
-  background:rgba(255,255,255,.5);
-  text-decoration:none;
-  font-size:12.5px;
-  font-weight:700;
-  overflow-wrap:anywhere;
-}
-
-.manager-chat-message.other .manager-chat-file-doc{
-  background:#fff;
-  color:var(--primary-dark);
-}
-
-.manager-chat-message.own .manager-chat-file-doc{
-  background:rgba(255,255,255,.18);
-  color:#fff;
-}
-
-.manager-chat-file-doc-size{
-  font-weight:400;
-  opacity:.75;
-  font-size:11px;
-  margin-left:auto;
-}
-
 /* ---- Barre de saisie en pilule ---- */
 .manager-chat-form{
   display:flex;
@@ -607,31 +541,6 @@ html{ scroll-behavior:auto; }
   padding:12px 14px;
   background:#fff;
   border-top:1px solid var(--border);
-}
-
-.manager-chat-attach{
-  border:1px solid var(--border);
-  background:#fff;
-  color:var(--text);
-  border-radius:50%;
-  width:40px;
-  height:40px;
-  flex-shrink:0;
-  cursor:pointer;
-  font-size:16px;
-  display:grid;
-  place-items:center;
-  transition:.18s ease;
-}
-
-.manager-chat-attach:hover{
-  border-color:var(--primary);
-  color:var(--primary-dark);
-}
-
-.manager-chat-attach:disabled{
-  opacity:.6;
-  cursor:default;
 }
 
 .manager-chat-input-wrap{
@@ -696,6 +605,5 @@ html{ scroll-behavior:auto; }
   .manager-chat-message{ max-width:90%; }
   .manager-chat-form{ padding:10px; }
   .manager-chat-input-wrap input{ font-size:16px; min-height:24px; }
-  .manager-chat-attach{ width:44px; height:44px; }
   .manager-chat-send{ width:38px; height:38px; }
 }
