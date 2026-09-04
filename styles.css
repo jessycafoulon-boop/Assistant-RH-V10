@@ -487,6 +487,35 @@ html{ scroll-behavior:auto; }
   white-space:nowrap;
 }
 
+.manager-chat-search-notice{
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+  padding:8px 10px;
+  margin-bottom:6px;
+}
+
+/* Message correspondant à la recherche : mis en valeur */
+.manager-chat-message.search-match .manager-chat-bubble{
+  box-shadow:0 0 0 2px var(--warning);
+}
+
+.manager-chat-message.search-match .manager-chat-theme-badge{
+  background:var(--warning-bg);
+  color:var(--warning);
+  border-color:#fedf89;
+}
+
+/* Messages hors recherche : estompés mais toujours lisibles (contexte conservé) */
+.manager-chat-message.search-dim{
+  opacity:.4;
+  transition:opacity .2s ease;
+}
+
+.manager-chat-message.search-dim:hover{
+  opacity:1;
+}
+
 /* ---- Badge de thème affiché sur chaque message ---- */
 .manager-chat-message-meta-row{
   display:flex;
