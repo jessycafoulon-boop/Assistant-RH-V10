@@ -329,43 +329,51 @@ function renderMessagesList(ownMatricule) {
   const countEl = document.getElementById("managerChatSearchCount");
   if (!messagesEl) return;
 
-  let filtered = currentThemeFilter === "all"
+  const themeFiltered = currentThemeFilter === "all"
     ? latestMessageDocs
     : latestMessageDocs.filter(docSnap => (docSnap.data().theme || "general") === currentThemeFilter);
 
   const terms = stripAccents(currentSearchQuery.trim().toLowerCase()).split(/\s+/).filter(Boolean);
 
+  const matchIds = new Set();
   if (terms.length > 0) {
-    filtered = filtered.filter(docSnap => {
+    themeFiltered.forEach(docSnap => {
       const normalized = stripAccents(String(docSnap.data().message || "").toLowerCase());
-      return terms.every(term => normalized.includes(term));
+      if (terms.every(term => normalized.includes(term))) {
+        matchIds.add(docSnap.id);
+      }
     });
   }
 
   if (countEl) {
     countEl.textContent = terms.length > 0
-      ? `${filtered.length} résultat${filtered.length > 1 ? "s" : ""}`
+      ? `${matchIds.size} résultat${matchIds.size > 1 ? "s" : ""}`
       : "";
   }
 
-  if (filtered.length === 0) {
-    const emptyLabel = terms.length > 0
-      ? `Aucun message ne correspond à « ${escapeHtml(currentSearchQuery.trim())} ».`
-      : `Aucun message ${currentThemeFilter === "all" ? "pour l'instant" : "dans ce thème"}. Soyez le premier à écrire !`;
+  if (themeFiltered.length === 0) {
+    const emptyLabel = `Aucun message ${currentThemeFilter === "all" ? "pour l'instant" : "dans ce thème"}. Soyez le premier à écrire !`;
     messagesEl.innerHTML = `<div class="manager-chat-empty">${emptyLabel}</div>`;
     return;
   }
 
-  messagesEl.innerHTML = filtered
+  const noticeHtml = (terms.length > 0 && matchIds.size === 0)
+    ? `<div class="manager-chat-search-notice">Aucun message ne correspond à « ${escapeHtml(currentSearchQuery.trim())} ». Voici l'ensemble de la discussion.</div>`
+    : "";
+
+  messagesEl.innerHTML = noticeHtml + themeFiltered
     .map(docSnap => {
       const data = docSnap.data();
       const date = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
       const isOwn = data.matricule === ownMatricule;
       const theme = getTheme(data.theme);
       const { textHtml, imagesHtml } = renderMessageContent(data.message);
+      const isMatch = matchIds.has(docSnap.id);
+      const isDimmed = terms.length > 0 && matchIds.size > 0 && !isMatch;
 
       return `
-        <div class="manager-chat-message ${isOwn ? "own" : "other"}">
+        <div class="manager-chat-message ${isOwn ? "own" : "other"} ${isMatch ? "search-match" : ""} ${isDimmed ? "search-dim" : ""}"
+             ${isMatch ? `data-search-match="1"` : ""}>
           <div class="manager-chat-message-meta-row">
             ${isOwn ? "" : `<span class="manager-chat-message-matricule">Matricule ${escapeHtml(data.matricule || "?")}</span>`}
             <span class="manager-chat-theme-badge">${theme.icon} ${escapeHtml(theme.label)}</span>
@@ -380,7 +388,12 @@ function renderMessagesList(ownMatricule) {
     })
     .join("");
 
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  if (terms.length > 0 && matchIds.size > 0) {
+    const firstMatch = messagesEl.querySelector('[data-search-match="1"]');
+    if (firstMatch) firstMatch.scrollIntoView({ block: "center" });
+  } else {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
 }
 
 /* =========================================================
