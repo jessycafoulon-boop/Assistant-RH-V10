@@ -61,10 +61,27 @@ const TEST_MATRICULES = ["10001", "10002", "10003", "10004"];
 const STORAGE_KEY = "managerChatMatricule";
 const MAX_MESSAGE_LENGTH = 500;
 
+/* Thèmes disponibles pour classer les messages.
+   Doit rester identique à la liste dans les règles Firestore. */
+const THEMES = [
+  { key: "general", label: "Général", icon: "💬" },
+  { key: "paie", label: "Paie", icon: "💶" },
+  { key: "formation", label: "Formation", icon: "🎓" },
+  { key: "carrieres", label: "Carrières", icon: "📋" },
+  { key: "urgent", label: "Urgent", icon: "🚨" }
+];
+const THEME_KEYS = THEMES.map(t => t.key);
+
+function getTheme(key) {
+  return THEMES.find(t => t.key === key) || THEMES[0];
+}
+
 const URL_REGEX = /(https?:\/\/[^\s<]+)/g;
 const IMAGE_URL_REGEX = /\.(jpe?g|png|gif|webp)(\?[^\s<]*)?$/i;
 
 let unsubscribeMessages = null;
+let currentThemeFilter = "all";
+let latestMessageDocs = [];
 
 /* =========================================================
    UTILITAIRES
@@ -176,10 +193,21 @@ function renderChat(matricule) {
           Changer
         </button>
       </div>
+      <div class="manager-chat-theme-tabs" id="managerChatThemeTabs">
+        <button type="button" class="manager-chat-theme-tab active" data-theme="all">Tous</button>
+        ${THEMES.map(t => `
+          <button type="button" class="manager-chat-theme-tab" data-theme="${t.key}">
+            ${t.icon} ${escapeHtml(t.label)}
+          </button>
+        `).join("")}
+      </div>
       <div id="managerChatMessages" class="manager-chat-messages" aria-live="polite">
         <div class="manager-chat-loading">Chargement des messages…</div>
       </div>
       <form id="managerChatForm" class="manager-chat-form">
+        <select id="managerChatThemeSelect" class="manager-chat-theme-select" aria-label="Thème du message">
+          ${THEMES.map(t => `<option value="${t.key}">${t.icon} ${escapeHtml(t.label)}</option>`).join("")}
+        </select>
         <div class="manager-chat-input-wrap">
           <input
             id="managerChatInput"
@@ -194,6 +222,18 @@ function renderChat(matricule) {
     </div>
   `;
 
+  currentThemeFilter = "all";
+
+  document.getElementById("managerChatThemeTabs").addEventListener("click", event => {
+    const tab = event.target.closest(".manager-chat-theme-tab");
+    if (!tab) return;
+
+    document.querySelectorAll(".manager-chat-theme-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentThemeFilter = tab.dataset.theme;
+    renderMessagesList(matricule);
+  });
+
   document.getElementById("managerChatSwitchBtn").addEventListener("click", () => {
     clearStoredMatricule();
     if (unsubscribeMessages) {
@@ -207,8 +247,11 @@ function renderChat(matricule) {
     event.preventDefault();
 
     const input = document.getElementById("managerChatInput");
+    const themeSelect = document.getElementById("managerChatThemeSelect");
     const message = input.value.trim();
     if (!message) return;
+
+    const theme = THEME_KEYS.includes(themeSelect.value) ? themeSelect.value : "general";
 
     const submitBtn = event.target.querySelector("button[type=submit]");
     if (submitBtn) submitBtn.disabled = true;
@@ -217,6 +260,7 @@ function renderChat(matricule) {
       await addDoc(collection(db, "managerChat"), {
         matricule,
         message,
+        theme,
         createdAt: serverTimestamp()
       });
       input.value = "";
@@ -251,38 +295,54 @@ function listenToMessages(ownMatricule) {
   unsubscribeMessages = onSnapshot(
     messagesQuery,
     snapshot => {
-      if (snapshot.empty) {
-        messagesEl.innerHTML = `<div class="manager-chat-empty">Aucun message pour l'instant. Soyez le premier à écrire !</div>`;
-        return;
-      }
-
-      messagesEl.innerHTML = snapshot.docs
-        .map(docSnap => {
-          const data = docSnap.data();
-          const date = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
-          const isOwn = data.matricule === ownMatricule;
-          const { textHtml, imagesHtml } = renderMessageContent(data.message);
-
-          return `
-            <div class="manager-chat-message ${isOwn ? "own" : "other"}">
-              ${isOwn ? "" : `<div class="manager-chat-message-matricule">Matricule ${escapeHtml(data.matricule || "?")}</div>`}
-              <div class="manager-chat-bubble">
-                ${imagesHtml}
-                <div class="manager-chat-message-text">${textHtml}</div>
-                <div class="manager-chat-message-time">${escapeHtml(formatTime(date))}</div>
-              </div>
-            </div>
-          `;
-        })
-        .join("");
-
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      latestMessageDocs = snapshot.docs;
+      renderMessagesList(ownMatricule);
     },
     err => {
       console.error("Erreur lors de la lecture du chat :", err);
       messagesEl.innerHTML = `<div class="manager-chat-error">Impossible de charger les messages pour le moment. Réessayez plus tard.</div>`;
     }
   );
+}
+
+function renderMessagesList(ownMatricule) {
+  const messagesEl = document.getElementById("managerChatMessages");
+  if (!messagesEl) return;
+
+  const filtered = currentThemeFilter === "all"
+    ? latestMessageDocs
+    : latestMessageDocs.filter(docSnap => (docSnap.data().theme || "general") === currentThemeFilter);
+
+  if (filtered.length === 0) {
+    messagesEl.innerHTML = `<div class="manager-chat-empty">Aucun message ${currentThemeFilter === "all" ? "pour l'instant" : "dans ce thème"}. Soyez le premier à écrire !</div>`;
+    return;
+  }
+
+  messagesEl.innerHTML = filtered
+    .map(docSnap => {
+      const data = docSnap.data();
+      const date = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
+      const isOwn = data.matricule === ownMatricule;
+      const theme = getTheme(data.theme);
+      const { textHtml, imagesHtml } = renderMessageContent(data.message);
+
+      return `
+        <div class="manager-chat-message ${isOwn ? "own" : "other"}">
+          <div class="manager-chat-message-meta-row">
+            ${isOwn ? "" : `<span class="manager-chat-message-matricule">Matricule ${escapeHtml(data.matricule || "?")}</span>`}
+            <span class="manager-chat-theme-badge">${theme.icon} ${escapeHtml(theme.label)}</span>
+          </div>
+          <div class="manager-chat-bubble">
+            ${imagesHtml}
+            <div class="manager-chat-message-text">${textHtml}</div>
+            <div class="manager-chat-message-time">${escapeHtml(formatTime(date))}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 /* =========================================================
