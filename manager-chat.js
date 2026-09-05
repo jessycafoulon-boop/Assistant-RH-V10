@@ -607,10 +607,21 @@ function renderMessagesList(ownMatricule) {
    déverrouillage du code d'accès à l'espace encadrants
 ========================================================= */
 
-export function initManagerChat() {
+/* matriculeFromGate : matricule déjà saisi et validé sur la page de
+   connexion (managers.html), transmis par manager-gate.js. Quand il
+   est fourni, on l'utilise directement et on saute l'étape de
+   sélection du matricule dans le chat — l'agent ne le saisit qu'une
+   fois pour toute la session. */
+export function initManagerChat(matriculeFromGate) {
   bindProfileBubbleHandlers();
 
-  const stored = getStoredMatricule();
+  const provided = typeof matriculeFromGate === "string" && TEST_MATRICULES.includes(matriculeFromGate)
+    ? matriculeFromGate
+    : null;
+
+  if (provided) setStoredMatricule(provided);
+
+  const stored = provided || getStoredMatricule();
   if (stored && TEST_MATRICULES.includes(stored)) {
     renderChat(stored);
   } else {
