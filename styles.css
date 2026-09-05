@@ -419,23 +419,6 @@ html{ scroll-behavior:auto; }
   font-weight:800;
 }
 
-.manager-chat-switch{
-  border:1px solid rgba(255,255,255,.5);
-  background:rgba(255,255,255,.12);
-  color:#fff;
-  font-weight:700;
-  font-size:12px;
-  border-radius:999px;
-  padding:6px 12px;
-  cursor:pointer;
-  flex-shrink:0;
-  transition:.18s ease;
-}
-
-.manager-chat-switch:hover{
-  background:rgba(255,255,255,.22);
-}
-
 /* ---- Onglets de filtrage par thème ---- */
 .manager-chat-theme-tabs{
   display:flex;
