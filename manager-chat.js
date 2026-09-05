@@ -35,6 +35,8 @@ import {
   getFirestore,
   collection,
   addDoc,
+  updateDoc,
+  doc,
   query,
   orderBy,
   limit,
@@ -57,6 +59,39 @@ const db = getFirestore(app);
 /* Liste des matricules acceptés en phase de test.
    Doit rester identique à la liste dans les règles Firestore. */
 const TEST_MATRICULES = ["10001", "10002", "10003", "10004"];
+
+/* Correspondance matricule → fiche intranet (Civil Net RH ou autre).
+   AUCUN NOM N'EST STOCKÉ ICI : uniquement le lien vers la fiche, que
+   les encadrants peuvent ouvrir eux-mêmes (avec leurs propres droits
+   d'accès à l'intranet) pour vérifier qui se cache derrière un
+   matricule. Un matricule sans entrée ici reste utilisable dans le
+   chat, simplement sans lien de vérification affiché. */
+const MATRICULE_PROFILES = {
+  "10001": "https://c.conflans.mairie-conflans.fr/#!/myprofile/9b0c5e7f-0eb9-4d1a-b00d-b3d8183c23e2/About"
+};
+
+function getProfileUrl(matricule) {
+  return MATRICULE_PROFILES[matricule] || null;
+}
+
+/* Affiche "Matricule 10001" ; si une fiche intranet est associée à ce
+   matricule, le texte devient un bouton ouvrant la fiche dans une
+   fenêtre superposée au chat (voir openProfileModal). */
+function renderMatriculeLabel(matricule) {
+  const label = `Matricule ${escapeHtml(matricule || "?")}`;
+  const profileUrl = getProfileUrl(matricule);
+
+  if (!profileUrl) {
+    return `<span class="manager-chat-message-matricule">${label}</span>`;
+  }
+
+  return `
+    <button type="button" class="manager-chat-message-matricule manager-chat-message-matricule-link"
+            data-profile-url="${escapeHtml(profileUrl)}">
+      ${label} 🔗
+    </button>
+  `;
+}
 
 const STORAGE_KEY = "managerChatMatricule";
 const MAX_MESSAGE_LENGTH = 500;
@@ -147,6 +182,87 @@ function renderMessageContent(rawMessage) {
 }
 
 /* =========================================================
+   FENÊTRE DE FICHE INTRANET (modale avec iframe)
+   ---------------------------------------------------------
+   Certains intranets RH interdisent volontairement leur
+   affichage en iframe (sécurité anti-clickjacking). Si c'est
+   le cas, la fenêtre reste vide : le bouton "nouvel onglet"
+   sert alors de secours.
+========================================================= */
+
+let profileModalHandlersBound = false;
+
+function ensureProfileModal() {
+  let modal = document.getElementById("managerChatProfileModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "managerChatProfileModal";
+  modal.className = "manager-chat-profile-modal";
+  modal.innerHTML = `
+    <div class="manager-chat-profile-modal-backdrop" data-profile-close="1"></div>
+    <div class="manager-chat-profile-modal-box">
+      <div class="manager-chat-profile-modal-header">
+        <span>👤 Fiche intranet</span>
+        <div class="manager-chat-profile-modal-actions">
+          <a id="managerChatProfileModalExternal" href="#" target="_blank" rel="noopener" class="manager-chat-profile-modal-external">
+            Ouvrir dans un nouvel onglet ↗
+          </a>
+          <button type="button" class="manager-chat-profile-modal-close" data-profile-close="1" aria-label="Fermer">✕</button>
+        </div>
+      </div>
+      <div class="manager-chat-profile-modal-body">
+        <iframe id="managerChatProfileModalFrame" class="manager-chat-profile-modal-frame" title="Fiche intranet"></iframe>
+        <div class="manager-chat-profile-modal-fallback">
+          Si la fiche ne s'affiche pas ci-dessus, cet intranet bloque son
+          intégration : utilisez « Ouvrir dans un nouvel onglet ↗ » en haut.
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function openProfileModal(url) {
+  const modal = ensureProfileModal();
+  modal.querySelector("#managerChatProfileModalFrame").src = url;
+  modal.querySelector("#managerChatProfileModalExternal").href = url;
+  modal.classList.add("open");
+}
+
+function closeProfileModal() {
+  const modal = document.getElementById("managerChatProfileModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  const frame = modal.querySelector("#managerChatProfileModalFrame");
+  if (frame) frame.src = "about:blank";
+}
+
+function bindProfileModalHandlers() {
+  if (profileModalHandlersBound) return;
+  profileModalHandlersBound = true;
+
+  document.addEventListener("click", event => {
+    const closeTrigger = event.target.closest("[data-profile-close]");
+    if (closeTrigger) {
+      closeProfileModal();
+      return;
+    }
+
+    const openTrigger = event.target.closest("[data-profile-url]");
+    if (openTrigger) {
+      event.preventDefault();
+      openProfileModal(openTrigger.dataset.profileUrl);
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeProfileModal();
+  });
+}
+
+/* =========================================================
    ÉTAPE 1 — CHOIX DU MATRICULE (identification, sans nom)
 ========================================================= */
 
@@ -163,11 +279,21 @@ function renderMatriculeGate() {
         tous les encadrants connectés à cet espace.
       </p>
       <div class="manager-chat-chip-row">
-        ${TEST_MATRICULES.map(m => `
-          <button type="button" class="manager-chat-chip" data-matricule="${m}">
-            ${escapeHtml(m)}
-          </button>
-        `).join("")}
+        ${TEST_MATRICULES.map(m => {
+          const profileUrl = getProfileUrl(m);
+          return `
+            <div class="manager-chat-chip-wrap">
+              <button type="button" class="manager-chat-chip" data-matricule="${m}">
+                ${escapeHtml(m)}
+              </button>
+              ${profileUrl ? `
+                <button type="button" class="manager-chat-chip-profile-link" data-profile-url="${escapeHtml(profileUrl)}">
+                  🔗 Voir la fiche
+                </button>
+              ` : ""}
+            </div>
+          `;
+        }).join("")}
       </div>
     </div>
   `;
@@ -251,6 +377,29 @@ function renderChat(matricule) {
   document.getElementById("managerChatSearchInput").addEventListener("input", event => {
     currentSearchQuery = event.target.value;
     renderMessagesList(matricule);
+  });
+
+  document.getElementById("managerChatMessages").addEventListener("click", async event => {
+    const btn = event.target.closest(".manager-chat-delete-btn");
+    if (!btn) return;
+
+    const messageId = btn.dataset.deleteId;
+    if (!messageId) return;
+
+    const confirmed = confirm("Supprimer ce message pour tout le monde ? Cette action est définitive.");
+    if (!confirmed) return;
+
+    btn.disabled = true;
+    try {
+      await updateDoc(doc(db, "managerChat", messageId), {
+        message: "",
+        deleted: true
+      });
+    } catch (err) {
+      console.error("Erreur lors de la suppression du message :", err);
+      alert("Le message n'a pas pu être supprimé. Réessayez.");
+      btn.disabled = false;
+    }
   });
 
   document.getElementById("managerChatSwitchBtn").addEventListener("click", () => {
@@ -367,21 +516,39 @@ function renderMessagesList(ownMatricule) {
       const date = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
       const isOwn = data.matricule === ownMatricule;
       const theme = getTheme(data.theme);
-      const { textHtml, imagesHtml } = renderMessageContent(data.message);
       const isMatch = matchIds.has(docSnap.id);
       const isDimmed = terms.length > 0 && matchIds.size > 0 && !isMatch;
+
+      if (data.deleted) {
+        return `
+          <div class="manager-chat-message ${isOwn ? "own" : "other"}">
+            <div class="manager-chat-message-meta-row">
+              ${isOwn ? "" : renderMatriculeLabel(data.matricule)}
+            </div>
+            <div class="manager-chat-bubble manager-chat-bubble-deleted">
+              <div class="manager-chat-message-text">🚫 Message supprimé</div>
+              <div class="manager-chat-message-time">${escapeHtml(formatTime(date))}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      const { textHtml, imagesHtml } = renderMessageContent(data.message);
 
       return `
         <div class="manager-chat-message ${isOwn ? "own" : "other"} ${isMatch ? "search-match" : ""} ${isDimmed ? "search-dim" : ""}"
              ${isMatch ? `data-search-match="1"` : ""}>
           <div class="manager-chat-message-meta-row">
-            ${isOwn ? "" : `<span class="manager-chat-message-matricule">Matricule ${escapeHtml(data.matricule || "?")}</span>`}
+            ${isOwn ? "" : renderMatriculeLabel(data.matricule)}
             <span class="manager-chat-theme-badge">${theme.icon} ${escapeHtml(theme.label)}</span>
           </div>
           <div class="manager-chat-bubble">
             ${imagesHtml}
             <div class="manager-chat-message-text">${textHtml}</div>
-            <div class="manager-chat-message-time">${escapeHtml(formatTime(date))}</div>
+            <div class="manager-chat-message-time">
+              ${escapeHtml(formatTime(date))}
+              ${isOwn ? `<button type="button" class="manager-chat-delete-btn" data-delete-id="${docSnap.id}">Supprimer</button>` : ""}
+            </div>
           </div>
         </div>
       `;
@@ -402,6 +569,8 @@ function renderMessagesList(ownMatricule) {
 ========================================================= */
 
 export function initManagerChat() {
+  bindProfileModalHandlers();
+
   const stored = getStoredMatricule();
   if (stored && TEST_MATRICULES.includes(stored)) {
     renderChat(stored);
