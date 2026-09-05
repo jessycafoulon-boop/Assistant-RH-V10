@@ -810,107 +810,6 @@ html{ scroll-behavior:auto; }
   cursor:default;
 }
 
-/* ---- Fenêtre de fiche intranet (modale) ---- */
-.manager-chat-profile-modal{
-  position:fixed;
-  inset:0;
-  z-index:9999;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.manager-chat-profile-modal.open{
-  display:flex;
-}
-
-.manager-chat-profile-modal-backdrop{
-  position:absolute;
-  inset:0;
-  background:rgba(20,26,36,.55);
-}
-
-.manager-chat-profile-modal-box{
-  position:relative;
-  width:100%;
-  max-width:720px;
-  height:min(80vh, 780px);
-  background:#fff;
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-}
-
-.manager-chat-profile-modal-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:12px 16px;
-  background:linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color:#fff;
-  font-weight:700;
-  font-size:14px;
-  flex-wrap:wrap;
-}
-
-.manager-chat-profile-modal-actions{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.manager-chat-profile-modal-external{
-  color:#fff;
-  font-size:12.5px;
-  font-weight:700;
-  text-decoration:underline;
-}
-
-.manager-chat-profile-modal-close{
-  border:1px solid rgba(255,255,255,.5);
-  background:rgba(255,255,255,.12);
-  color:#fff;
-  border-radius:50%;
-  width:28px;
-  height:28px;
-  cursor:pointer;
-  font-size:13px;
-  display:grid;
-  place-items:center;
-}
-
-.manager-chat-profile-modal-close:hover{
-  background:rgba(255,255,255,.22);
-}
-
-.manager-chat-profile-modal-body{
-  position:relative;
-  flex:1;
-  min-height:0;
-}
-
-.manager-chat-profile-modal-frame{
-  width:100%;
-  height:100%;
-  border:0;
-  display:block;
-}
-
-.manager-chat-profile-modal-fallback{
-  position:absolute;
-  left:16px;
-  right:16px;
-  bottom:12px;
-  font-size:11.5px;
-  color:var(--muted);
-  text-align:center;
-  pointer-events:none;
-}
-
 /* ---- Mobile ---- */
 @media (max-width:600px){
   .manager-chat-identify{ padding:15px; border-radius:15px; }
@@ -925,6 +824,4 @@ html{ scroll-behavior:auto; }
   .manager-chat-theme-select{ max-width:88px; font-size:11px; padding:9px 6px; }
   .manager-chat-search-bar{ padding:8px 10px; flex-wrap:wrap; }
   .manager-chat-search-input{ font-size:16px; min-height:38px; }
-  .manager-chat-profile-modal{ padding:0; }
-  .manager-chat-profile-modal-box{ max-width:none; width:100%; height:100%; border-radius:0; }
 }
