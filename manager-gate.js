@@ -28,8 +28,19 @@
       identifiants nominatifs...). C'est ce système externe qui
       doit assurer la sécurité, pas cette page statique.
    3. Le code "4827" utilisé jusqu'ici est déjà visible dans
-      l'historique Git de ce dépôt public. Si des managers
-      l'utilisaient réellement, changez-le (voir plus bas).
+      l'historique Git de ce dépôt public. Il sert maintenant
+      UNIQUEMENT de clé interne fixe pour déchiffrer les
+      ressources (MANAGER_RESOURCES_KEY ci-dessous) : l'agent ne
+      le saisit plus. Le contrôle d'accès visible se fait
+      désormais par MATRICULE (liste fermée MANAGER_TEST_MATRICULES,
+      à synchroniser avec TEST_MATRICULES dans manager-chat.js et
+      avec les règles Firestore).
+   4. ⚠️ La liste des matricules acceptés est visible dans ce
+      fichier JS public, donc dans le code source téléchargé par
+      n'importe qui. Comme pour l'ancien code à 4 chiffres, ce
+      n'est qu'un frein contre un accès accidentel, pas une vraie
+      authentification — ne pas relâcher la vigilance sur la
+      règle 1 ci-dessus pour autant.
 
    ---------------------------------------------------------
    COMMENT MODIFIER LES RESSOURCES OU LE CODE
@@ -70,6 +81,20 @@ const MANAGER_RESOURCES_CIPHERTEXT =
 
 const MANAGER_MAX_ATTEMPTS = 5;
 const MANAGER_LOCKOUT_MS = 60000;
+
+/* Liste fermée des matricules acceptés pour déverrouiller l'espace
+   encadrants (phase de test). DOIT rester identique à TEST_MATRICULES
+   dans manager-chat.js et à la liste dans les règles de sécurité
+   Firestore — les trois doivent toujours correspondre. */
+const MANAGER_TEST_MATRICULES = ["10001", "10002", "10003", "10004"];
+
+/* Clé réelle utilisée pour chiffrer/déchiffrer MANAGER_RESOURCES_CIPHERTEXT.
+   Ce n'est PAS ce que l'agent saisit désormais (il saisit son matricule,
+   vérifié juste au-dessus contre MANAGER_TEST_MATRICULES) : c'est une
+   clé interne fixe, inchangée depuis la bascule du code "4827" partagé
+   vers une saisie par matricule. Elle reste nécessaire pour déchiffrer
+   les ressources existantes sans avoir à les régénérer. */
+const MANAGER_RESOURCES_KEY = "4827";
 
 let managerFailedAttempts = 0;
 let managerLockedUntil = 0;
@@ -554,17 +579,17 @@ async function unlockManagerResources(){
     return;
   }
 
-  const pin = input.value.trim();
+  const matricule = input.value.trim();
 
-  if(!/^\d{4}$/.test(pin)){
-    error.textContent = "Saisissez un code composé de 4 chiffres.";
+  if(!MANAGER_TEST_MATRICULES.includes(matricule)){
+    error.textContent = "Matricule non reconnu.";
     error.classList.add("active");
     return;
   }
 
   if(button) button.disabled = true;
 
-  const resources = await decryptResources(pin);
+  const resources = await decryptResources(MANAGER_RESOURCES_KEY);
 
   if(resources){
     managerFailedAttempts = 0;
@@ -578,7 +603,7 @@ async function unlockManagerResources(){
     const chatContainer = document.getElementById("managerChatContainer");
     if(chatContainer){
       chatContainer.hidden = false;
-      if(typeof window.initManagerChat === "function") window.initManagerChat();
+      if(typeof window.initManagerChat === "function") window.initManagerChat(matricule);
     }
   }else{
     managerFailedAttempts += 1;
@@ -588,7 +613,7 @@ async function unlockManagerResources(){
       managerFailedAttempts = 0;
       error.textContent = `Trop de tentatives. Réessayez dans ${Math.ceil(MANAGER_LOCKOUT_MS / 1000)}s.`;
     }else{
-      error.textContent = "Code incorrect.";
+      error.textContent = "Une erreur est survenue. Réessayez.";
     }
 
     error.classList.add("active");
