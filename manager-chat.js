@@ -74,9 +74,33 @@ function getProfileUrl(matricule) {
   return MATRICULE_PROFILES[matricule] || null;
 }
 
+/* Ouvre la fiche dans une petite fenêtre flottante séparée (pas une
+   iframe intégrée) : ceci reste une vraie navigation dans une fenêtre
+   à part, donc l'intranet ne peut pas la bloquer comme il bloquerait
+   une iframe. Réutilise la même fenêtre si on clique plusieurs fois. */
+function openProfileWindow(url) {
+  const features = "width=520,height=760,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes";
+  const win = window.open(url, "managerChatProfileWindow", features);
+  if (win) win.focus();
+}
+
+let profileWindowHandlerBound = false;
+
+function bindProfileWindowHandler() {
+  if (profileWindowHandlerBound) return;
+  profileWindowHandlerBound = true;
+
+  document.addEventListener("click", event => {
+    const trigger = event.target.closest("[data-profile-url]");
+    if (!trigger) return;
+    event.preventDefault();
+    openProfileWindow(trigger.dataset.profileUrl);
+  });
+}
+
 /* Affiche "Matricule 10001" ; si une fiche intranet est associée à ce
-   matricule, le texte devient un bouton ouvrant la fiche dans une
-   fenêtre superposée au chat (voir openProfileModal). */
+   matricule, le texte devient un bouton qui ouvre la fiche dans une
+   petite fenêtre flottante séparée (voir openProfileWindow). */
 function renderMatriculeLabel(matricule) {
   const label = `Matricule ${escapeHtml(matricule || "?")}`;
   const profileUrl = getProfileUrl(matricule);
@@ -179,87 +203,6 @@ function renderMessageContent(rawMessage) {
   });
 
   return { textHtml, imagesHtml };
-}
-
-/* =========================================================
-   FENÊTRE DE FICHE INTRANET (modale avec iframe)
-   ---------------------------------------------------------
-   Certains intranets RH interdisent volontairement leur
-   affichage en iframe (sécurité anti-clickjacking). Si c'est
-   le cas, la fenêtre reste vide : le bouton "nouvel onglet"
-   sert alors de secours.
-========================================================= */
-
-let profileModalHandlersBound = false;
-
-function ensureProfileModal() {
-  let modal = document.getElementById("managerChatProfileModal");
-  if (modal) return modal;
-
-  modal = document.createElement("div");
-  modal.id = "managerChatProfileModal";
-  modal.className = "manager-chat-profile-modal";
-  modal.innerHTML = `
-    <div class="manager-chat-profile-modal-backdrop" data-profile-close="1"></div>
-    <div class="manager-chat-profile-modal-box">
-      <div class="manager-chat-profile-modal-header">
-        <span>👤 Fiche intranet</span>
-        <div class="manager-chat-profile-modal-actions">
-          <a id="managerChatProfileModalExternal" href="#" target="_blank" rel="noopener" class="manager-chat-profile-modal-external">
-            Ouvrir dans un nouvel onglet ↗
-          </a>
-          <button type="button" class="manager-chat-profile-modal-close" data-profile-close="1" aria-label="Fermer">✕</button>
-        </div>
-      </div>
-      <div class="manager-chat-profile-modal-body">
-        <iframe id="managerChatProfileModalFrame" class="manager-chat-profile-modal-frame" title="Fiche intranet"></iframe>
-        <div class="manager-chat-profile-modal-fallback">
-          Si la fiche ne s'affiche pas ci-dessus, cet intranet bloque son
-          intégration : utilisez « Ouvrir dans un nouvel onglet ↗ » en haut.
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  return modal;
-}
-
-function openProfileModal(url) {
-  const modal = ensureProfileModal();
-  modal.querySelector("#managerChatProfileModalFrame").src = url;
-  modal.querySelector("#managerChatProfileModalExternal").href = url;
-  modal.classList.add("open");
-}
-
-function closeProfileModal() {
-  const modal = document.getElementById("managerChatProfileModal");
-  if (!modal) return;
-  modal.classList.remove("open");
-  const frame = modal.querySelector("#managerChatProfileModalFrame");
-  if (frame) frame.src = "about:blank";
-}
-
-function bindProfileModalHandlers() {
-  if (profileModalHandlersBound) return;
-  profileModalHandlersBound = true;
-
-  document.addEventListener("click", event => {
-    const closeTrigger = event.target.closest("[data-profile-close]");
-    if (closeTrigger) {
-      closeProfileModal();
-      return;
-    }
-
-    const openTrigger = event.target.closest("[data-profile-url]");
-    if (openTrigger) {
-      event.preventDefault();
-      openProfileModal(openTrigger.dataset.profileUrl);
-    }
-  });
-
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape") closeProfileModal();
-  });
 }
 
 /* =========================================================
@@ -569,7 +512,7 @@ function renderMessagesList(ownMatricule) {
 ========================================================= */
 
 export function initManagerChat() {
-  bindProfileModalHandlers();
+  bindProfileWindowHandler();
 
   const stored = getStoredMatricule();
   if (stored && TEST_MATRICULES.includes(stored)) {
