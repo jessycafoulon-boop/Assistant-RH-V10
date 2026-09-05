@@ -47,7 +47,6 @@ import {
   getAuth,
   setPersistence,
   browserLocalPersistence,
-  fetchSignInMethodsForEmail,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -75,8 +74,17 @@ setPersistence(auth, browserLocalPersistence).catch(() => {});
    réel avec mot de passe — impossible à usurper juste en lisant
    le code source, contrairement au matricule seul.
 
-   Ces fonctions sont exposées sur window pour que manager-gate.js
-   (un script classique, pas un module) puisse les appeler.
+   ⚠️ On n'essaie PAS de deviner à l'avance si un compte existe déjà
+   (via fetchSignInMethodsForEmail) : depuis 2023, Firebase active
+   par défaut une protection anti-énumération qui fait TOUJOURS
+   répondre "aucun compte" à cette vérification, même quand un
+   compte existe. La seule méthode fiable est donc : essayer de se
+   connecter, et si ça échoue, tenter de créer le compte — l'erreur
+   "email déjà utilisé" à la création nous dit alors que le compte
+   existait bel et bien et que c'est le mot de passe qui est faux.
+
+   Cette fonction est exposée sur window pour que manager-gate.js
+   (un script classique, pas un module) puisse l'appeler.
 ========================================================= */
 
 const AUTH_EMAIL_DOMAIN = "@encadrants-conflans.local";
@@ -85,29 +93,36 @@ function matriculeToEmail(matricule) {
   return `${matricule}${AUTH_EMAIL_DOMAIN}`;
 }
 
-/* Indique si un compte existe déjà pour ce matricule (connexion) ou
-   si c'est la première fois (l'agent doit choisir un mot de passe). */
-async function managerAuthAccountExists(matricule) {
-  const methods = await fetchSignInMethodsForEmail(auth, matriculeToEmail(matricule));
-  return methods.length > 0;
+/* Connecte le matricule avec le mot de passe saisi. Si aucun compte
+   n'existe encore, le crée automatiquement avec ce même mot de passe
+   (= première connexion). Retourne { created: true } si un compte
+   vient d'être créé, { created: false } si c'était déjà le sien.
+   Lance une erreur avec .code === "auth/wrong-password" si un compte
+   existe mais que le mot de passe ne correspond pas, ou l'erreur
+   Firebase d'origine pour tout autre cas (mot de passe trop faible,
+   etc.). */
+async function managerAuthLogin(matricule, password) {
+  const email = matriculeToEmail(matricule);
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    return { created: false };
+  } catch (signInError) {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      return { created: true };
+    } catch (registerError) {
+      if (registerError && registerError.code === "auth/email-already-in-use") {
+        const wrongPasswordError = new Error("Mot de passe incorrect.");
+        wrongPasswordError.code = "auth/wrong-password";
+        throw wrongPasswordError;
+      }
+      throw registerError;
+    }
+  }
 }
 
-/* Crée le compte du matricule avec le mot de passe choisi par
-   l'agent (première connexion). Lance une erreur Firebase Auth en
-   cas de problème (mot de passe trop court, etc.). */
-async function managerAuthRegister(matricule, password) {
-  await createUserWithEmailAndPassword(auth, matriculeToEmail(matricule), password);
-}
-
-/* Connecte le matricule avec son mot de passe existant. Lance une
-   erreur Firebase Auth (ex. auth/wrong-password) en cas d'échec. */
-async function managerAuthSignIn(matricule, password) {
-  await signInWithEmailAndPassword(auth, matriculeToEmail(matricule), password);
-}
-
-window.managerAuthAccountExists = managerAuthAccountExists;
-window.managerAuthRegister = managerAuthRegister;
-window.managerAuthSignIn = managerAuthSignIn;
+window.managerAuthLogin = managerAuthLogin;
 
 /* Liste des matricules acceptés en phase de test.
    Doit rester identique à la liste dans les règles Firestore. */
