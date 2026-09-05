@@ -60,58 +60,144 @@ const db = getFirestore(app);
    Doit rester identique à la liste dans les règles Firestore. */
 const TEST_MATRICULES = ["10001", "10002", "10003", "10004"];
 
-/* Correspondance matricule → fiche intranet (Civil Net RH ou autre).
-   AUCUN NOM N'EST STOCKÉ ICI : uniquement le lien vers la fiche, que
-   les encadrants peuvent ouvrir eux-mêmes (avec leurs propres droits
-   d'accès à l'intranet) pour vérifier qui se cache derrière un
-   matricule. Un matricule sans entrée ici reste utilisable dans le
-   chat, simplement sans lien de vérification affiché. */
+/* Correspondance matricule → informations locales + lien de fiche.
+   AUCUN NOM N'EST STOCKÉ ICI : uniquement un service/une fonction que
+   TU renseignes toi-même ci-dessous (facultatif), plus le lien vers
+   la fiche intranet complète. La bulle affiche ces infos locales
+   instantanément (pas de dépendance à l'intranet), avec un lien de
+   secours pour ouvrir la fiche complète si besoin de vérifier
+   davantage. Remplis service/fonction quand tu les as ; laisse une
+   chaîne vide "" si tu ne veux pas les afficher. */
 const MATRICULE_PROFILES = {
-  "10001": "https://c.conflans.mairie-conflans.fr/#!/myprofile/9b0c5e7f-0eb9-4d1a-b00d-b3d8183c23e2/About"
+  "10001": {
+    url: "https://c.conflans.mairie-conflans.fr/#!/myprofile/9b0c5e7f-0eb9-4d1a-b00d-b3d8183c23e2/About",
+    service: "RH",
+    fonction: "Gestionnaire formation"
+  }
 };
 
-function getProfileUrl(matricule) {
+function getProfile(matricule) {
   return MATRICULE_PROFILES[matricule] || null;
 }
 
-/* Ouvre la fiche dans une petite fenêtre flottante séparée (pas une
-   iframe intégrée) : ceci reste une vraie navigation dans une fenêtre
-   à part, donc l'intranet ne peut pas la bloquer comme il bloquerait
-   une iframe. Réutilise la même fenêtre si on clique plusieurs fois. */
+/* Ouvre la fiche complète dans une petite fenêtre flottante séparée
+   (pas une iframe intégrée) : ceci reste une vraie navigation dans
+   une fenêtre à part, donc l'intranet ne peut pas la bloquer comme
+   il bloquerait une iframe. */
 function openProfileWindow(url) {
   const features = "width=520,height=760,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes";
   const win = window.open(url, "managerChatProfileWindow", features);
   if (win) win.focus();
 }
 
-let profileWindowHandlerBound = false;
+/* =========================================================
+   BULLE DE PROFIL (info locale, sans dépendance à l'intranet)
+========================================================= */
 
-function bindProfileWindowHandler() {
-  if (profileWindowHandlerBound) return;
-  profileWindowHandlerBound = true;
+let profileBubbleHandlersBound = false;
 
-  document.addEventListener("click", event => {
-    const trigger = event.target.closest("[data-profile-url]");
-    if (!trigger) return;
-    event.preventDefault();
-    openProfileWindow(trigger.dataset.profileUrl);
+function ensureProfileBubble() {
+  let bubble = document.getElementById("managerChatProfileBubble");
+  if (bubble) return bubble;
+
+  bubble = document.createElement("div");
+  bubble.id = "managerChatProfileBubble";
+  bubble.className = "manager-chat-profile-bubble";
+  document.body.appendChild(bubble);
+  return bubble;
+}
+
+function closeProfileBubble() {
+  const bubble = document.getElementById("managerChatProfileBubble");
+  if (bubble) bubble.classList.remove("open");
+}
+
+function openProfileBubble(trigger, matricule) {
+  const profile = getProfile(matricule);
+  if (!profile) return;
+
+  const bubble = ensureProfileBubble();
+  bubble.dataset.forMatricule = matricule;
+
+  const lines = [];
+  if (profile.service) lines.push(`<div class="manager-chat-profile-bubble-line"><strong>Service :</strong> ${escapeHtml(profile.service)}</div>`);
+  if (profile.fonction) lines.push(`<div class="manager-chat-profile-bubble-line"><strong>Fonction :</strong> ${escapeHtml(profile.fonction)}</div>`);
+
+  bubble.innerHTML = `
+    ${lines.length > 0 ? lines.join("") : `<div class="manager-chat-profile-bubble-empty">Aucune information renseignée pour ce matricule.</div>`}
+    ${profile.url ? `<button type="button" class="manager-chat-profile-bubble-link" data-open-profile-url="${escapeHtml(profile.url)}">Voir la fiche complète ↗</button>` : ""}
+  `;
+
+  const rect = trigger.getBoundingClientRect();
+  bubble.style.top = `${rect.bottom + window.scrollY + 6}px`;
+  bubble.style.left = `${rect.left + window.scrollX}px`;
+  bubble.classList.add("open");
+
+  requestAnimationFrame(() => {
+    const bubbleRect = bubble.getBoundingClientRect();
+    const overflow = bubbleRect.right - (window.innerWidth - 8);
+    if (overflow > 0) {
+      bubble.style.left = `${rect.left + window.scrollX - overflow}px`;
+    }
   });
 }
 
-/* Affiche "Matricule 10001" ; si une fiche intranet est associée à ce
-   matricule, le texte devient un bouton qui ouvre la fiche dans une
-   petite fenêtre flottante séparée (voir openProfileWindow). */
+function bindProfileBubbleHandlers() {
+  if (profileBubbleHandlersBound) return;
+  profileBubbleHandlersBound = true;
+
+  document.addEventListener("click", event => {
+    const openLinkBtn = event.target.closest("[data-open-profile-url]");
+    if (openLinkBtn) {
+      openProfileWindow(openLinkBtn.dataset.openProfileUrl);
+      closeProfileBubble();
+      return;
+    }
+
+    const trigger = event.target.closest("[data-profile-matricule]");
+    if (trigger) {
+      event.preventDefault();
+      const bubble = document.getElementById("managerChatProfileBubble");
+      const alreadyOpen = bubble
+        && bubble.classList.contains("open")
+        && bubble.dataset.forMatricule === trigger.dataset.profileMatricule;
+
+      if (alreadyOpen) {
+        closeProfileBubble();
+      } else {
+        openProfileBubble(trigger, trigger.dataset.profileMatricule);
+      }
+      return;
+    }
+
+    const bubbleEl = document.getElementById("managerChatProfileBubble");
+    if (bubbleEl && !bubbleEl.contains(event.target)) {
+      closeProfileBubble();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeProfileBubble();
+  });
+
+  window.addEventListener("scroll", () => closeProfileBubble(), true);
+  window.addEventListener("resize", () => closeProfileBubble());
+}
+
+/* Affiche "Matricule 10001" ; si des informations locales sont
+   associées à ce matricule, le texte devient un bouton qui ouvre
+   la bulle de profil (voir openProfileBubble). */
 function renderMatriculeLabel(matricule) {
   const label = `Matricule ${escapeHtml(matricule || "?")}`;
-  const profileUrl = getProfileUrl(matricule);
+  const profile = getProfile(matricule);
 
-  if (!profileUrl) {
+  if (!profile) {
     return `<span class="manager-chat-message-matricule">${label}</span>`;
   }
 
   return `
     <button type="button" class="manager-chat-message-matricule manager-chat-message-matricule-link"
-            data-profile-url="${escapeHtml(profileUrl)}">
+            data-profile-matricule="${escapeHtml(matricule)}">
       ${label} 🔗
     </button>
   `;
@@ -223,14 +309,14 @@ function renderMatriculeGate() {
       </p>
       <div class="manager-chat-chip-row">
         ${TEST_MATRICULES.map(m => {
-          const profileUrl = getProfileUrl(m);
+          const profile = getProfile(m);
           return `
             <div class="manager-chat-chip-wrap">
               <button type="button" class="manager-chat-chip" data-matricule="${m}">
                 ${escapeHtml(m)}
               </button>
-              ${profileUrl ? `
-                <button type="button" class="manager-chat-chip-profile-link" data-profile-url="${escapeHtml(profileUrl)}">
+              ${profile ? `
+                <button type="button" class="manager-chat-chip-profile-link" data-profile-matricule="${escapeHtml(m)}">
                   🔗 Voir la fiche
                 </button>
               ` : ""}
@@ -512,7 +598,7 @@ function renderMessagesList(ownMatricule) {
 ========================================================= */
 
 export function initManagerChat() {
-  bindProfileWindowHandler();
+  bindProfileBubbleHandlers();
 
   const stored = getStoredMatricule();
   if (stored && TEST_MATRICULES.includes(stored)) {
