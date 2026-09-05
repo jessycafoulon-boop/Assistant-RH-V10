@@ -25,20 +25,20 @@
         <div id="managerGate">
           <h2>🔑 Ressources réservées aux Encadrants</h2>
           <p style="color:var(--muted); font-size:13px; line-height:1.5;">
-            Saisissez le code à 4 chiffres transmis aux encadrants pour accéder à cette page.
-            Ce code évite qu'un agent tombe accidentellement sur cette page ; ce n'est pas
+            Saisissez votre matricule d'encadrant pour accéder à cette page.
+            Ce contrôle évite qu'un agent tombe accidentellement sur cette page ; ce n'est pas
             une protection contre un accès volontaire non autorisé.
           </p>
           <div class="manager-pin-row">
-            <input id="managerPin" class="manager-pin-input" type="password" inputmode="numeric"
-                   pattern="[0-9]{4}" maxlength="4" autocomplete="off"
-                   placeholder="••••" aria-label="Code Encadrants à 4 chiffres">
+            <input id="managerPin" class="manager-pin-input" type="text" inputmode="numeric"
+                   maxlength="10" autocomplete="off"
+                   placeholder="Matricule" aria-label="Matricule d'encadrant">
             <button id="managerPinSubmit" class="manager-pin-submit" type="button">
               Déverrouiller
             </button>
           </div>
           <div id="managerPinError" class="manager-pin-error">
-            Code incorrect.
+            Matricule non reconnu.
           </div>
         </div>
 
@@ -60,7 +60,7 @@
         <div class="manager-resources" id="managerResources" hidden></div>
 
         <!-- Chat entre encadrants (phase de test, 4 matricules fictifs).
-             Rempli par manager-chat.js une fois le code d'accès validé. -->
+             Rempli par manager-chat.js une fois le matricule validé. -->
         <div class="manager-chat-container" id="managerChatContainer" hidden></div>
       </section>
     </main>
