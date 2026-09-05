@@ -60,6 +60,21 @@ const db = getFirestore(app);
    Doit rester identique à la liste dans les règles Firestore. */
 const TEST_MATRICULES = ["10001", "10002", "10003", "10004"];
 
+/* Correspondance matricule → prénom affiché dans le chat.
+   Le matricule reste utilisé partout en interne (identification,
+   sécurité Firestore, bulle de profil) : seul l'AFFICHAGE change,
+   pour ne plus jamais montrer le matricule brut aux autres agents. */
+const MATRICULE_PRENOMS = {
+  "10001": "Jessyca",
+  "10002": "Pierre",
+  "10003": "Marie",
+  "10004": "Aline"
+};
+
+function getDisplayName(matricule) {
+  return MATRICULE_PRENOMS[matricule] || `Matricule ${matricule || "?"}`;
+}
+
 /* Correspondance matricule → informations locales + lien de fiche.
    AUCUN NOM N'EST STOCKÉ ICI : uniquement un service/une fonction que
    TU renseignes toi-même ci-dessous (facultatif), plus le lien vers
@@ -194,11 +209,11 @@ function bindProfileBubbleHandlers() {
   window.addEventListener("resize", () => closeProfileBubble());
 }
 
-/* Affiche "Matricule 10001" ; si des informations locales sont
-   associées à ce matricule, le texte devient un bouton qui ouvre
-   la bulle de profil (voir openProfileBubble). */
+/* Affiche le prénom de l'auteur du message (jamais le matricule brut) ;
+   si des informations locales sont associées à ce matricule, le texte
+   devient un bouton qui ouvre la bulle de profil (voir openProfileBubble). */
 function renderMatriculeLabel(matricule) {
-  const label = `Matricule ${escapeHtml(matricule || "?")}`;
+  const label = escapeHtml(getDisplayName(matricule));
   const profile = getProfile(matricule);
 
   if (!profile) {
@@ -302,7 +317,12 @@ function renderMessageContent(rawMessage) {
 }
 
 /* =========================================================
-   ÉTAPE 1 — CHOIX DU MATRICULE (identification, sans nom)
+   ÉTAPE 1 — CHOIX DU MATRICULE (écran de secours)
+   ---------------------------------------------------------
+   Normalement inutile : le matricule vient désormais de la
+   page de connexion (managers.html → manager-gate.js) et est
+   transmis directement à initManagerChat(). Cet écran ne
+   s'affiche que si aucun matricule valide n'a pu être récupéré.
 ========================================================= */
 
 function renderMatriculeGate() {
@@ -313,9 +333,9 @@ function renderMatriculeGate() {
     <div class="manager-chat-identify">
       <h3 class="manager-chat-title">💬 Chat entre encadrants <span class="manager-chat-badge">test</span></h3>
       <p class="manager-chat-hint">
-        Choisissez votre matricule de test pour rejoindre le chat. Aucun nom n'est
-        stocké : seul le matricule apparaît à côté de vos messages, visibles de
-        tous les encadrants connectés à cet espace.
+        Choisissez votre identité de test pour rejoindre le chat. Votre matricule
+        reste utilisé en interne pour vous identifier de façon fiable, mais
+        seul votre prénom est visible des autres encadrants.
       </p>
       <div class="manager-chat-chip-row">
         ${TEST_MATRICULES.map(m => {
@@ -323,7 +343,7 @@ function renderMatriculeGate() {
           return `
             <div class="manager-chat-chip-wrap">
               <button type="button" class="manager-chat-chip" data-matricule="${m}">
-                ${escapeHtml(m)}
+                ${escapeHtml(getDisplayName(m))}
               </button>
               ${profile ? `
                 <button type="button" class="manager-chat-chip-profile-link" data-profile-matricule="${escapeHtml(m)}">
@@ -359,11 +379,8 @@ function renderChat(matricule) {
     <div class="manager-chat">
       <div class="manager-chat-header">
         <span class="manager-chat-header-label">
-          💬 Vous discutez sous le matricule <strong>${escapeHtml(matricule)}</strong>
+          💬 Vous discutez en tant que <strong>${escapeHtml(getDisplayName(matricule))}</strong>
         </span>
-        <button id="managerChatSwitchBtn" type="button" class="manager-chat-switch">
-          Changer
-        </button>
       </div>
       <div class="manager-chat-theme-tabs" id="managerChatThemeTabs">
         <button type="button" class="manager-chat-theme-tab active" data-theme="all">Tous</button>
@@ -439,15 +456,6 @@ function renderChat(matricule) {
       alert("Le message n'a pas pu être supprimé. Réessayez.");
       btn.disabled = false;
     }
-  });
-
-  document.getElementById("managerChatSwitchBtn").addEventListener("click", () => {
-    clearStoredMatricule();
-    if (unsubscribeMessages) {
-      unsubscribeMessages();
-      unsubscribeMessages = null;
-    }
-    renderMatriculeGate();
   });
 
   document.getElementById("managerChatForm").addEventListener("submit", async event => {
