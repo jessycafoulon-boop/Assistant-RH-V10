@@ -630,7 +630,7 @@ document.addEventListener("DOMContentLoaded", () => {
   input.focus();
 
   input.addEventListener("input", () => {
-    input.value = input.value.replace(/\D/g, "").slice(0, 4);
+    input.value = input.value.replace(/\D/g, "").slice(0, 10);
     const error = document.getElementById("managerPinError");
     if(error) error.classList.remove("active");
   });
