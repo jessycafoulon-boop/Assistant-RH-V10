@@ -25,21 +25,22 @@
         <div id="managerGate">
           <h2>🔑 Ressources réservées aux Encadrants</h2>
           <p style="color:var(--muted); font-size:13px; line-height:1.5;">
-            Saisissez votre matricule d'encadrant pour accéder à cette page.
-            Ce contrôle évite qu'un agent tombe accidentellement sur cette page ; ce n'est pas
-            une protection contre un accès volontaire non autorisé.
+            Saisissez votre matricule d'encadrant. Lors de votre toute première
+            connexion, vous choisirez vous-même un mot de passe personnel.
           </p>
-          <div class="manager-pin-row">
-            <input id="managerPin" class="manager-pin-input" type="text" inputmode="numeric"
+
+          <div id="managerGateStep1" class="manager-pin-row">
+            <input id="managerMatricule" class="manager-pin-input" type="text" inputmode="numeric"
                    maxlength="10" autocomplete="off"
                    placeholder="Matricule" aria-label="Matricule d'encadrant">
-            <button id="managerPinSubmit" class="manager-pin-submit" type="button">
-              Déverrouiller
+            <button id="managerMatriculeSubmit" class="manager-pin-submit" type="button">
+              Continuer
             </button>
           </div>
-          <div id="managerPinError" class="manager-pin-error">
-            Matricule non reconnu.
-          </div>
+
+          <div id="managerGateStep2" class="manager-gate-step2" hidden></div>
+
+          <div id="managerPinError" class="manager-pin-error"></div>
         </div>
 
         <!-- Ce conteneur reste vide dans le code source : les ressources managers sont
