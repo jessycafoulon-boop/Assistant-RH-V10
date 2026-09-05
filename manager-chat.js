@@ -129,16 +129,26 @@ function openProfileBubble(trigger, matricule) {
   `;
 
   const rect = trigger.getBoundingClientRect();
-  bubble.style.top = `${rect.bottom + window.scrollY + 6}px`;
-  bubble.style.left = `${rect.left + window.scrollX}px`;
+  bubble.style.top = `${rect.bottom + 6}px`;
+  bubble.style.left = `${rect.left}px`;
   bubble.classList.add("open");
 
   requestAnimationFrame(() => {
     const bubbleRect = bubble.getBoundingClientRect();
-    const overflow = bubbleRect.right - (window.innerWidth - 8);
-    if (overflow > 0) {
-      bubble.style.left = `${rect.left + window.scrollX - overflow}px`;
+
+    let left = rect.left;
+    const overflowRight = bubbleRect.right - (window.innerWidth - 8);
+    if (overflowRight > 0) left -= overflowRight;
+    if (left < 8) left = 8;
+    bubble.style.left = `${left}px`;
+
+    let top = rect.bottom + 6;
+    const overflowBottom = (top + bubbleRect.height) - (window.innerHeight - 8);
+    if (overflowBottom > 0) {
+      const above = rect.top - bubbleRect.height - 6;
+      top = above > 8 ? above : Math.max(8, window.innerHeight - bubbleRect.height - 8);
     }
+    bubble.style.top = `${top}px`;
   });
 }
 
